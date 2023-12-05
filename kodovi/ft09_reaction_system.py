@@ -73,7 +73,7 @@ vtkfile_u_3 = File('reaction_system/u_3.pvd')
 
 # Create progress bar
 progress = Progress('Time-stepping')
-set_log_level(PROGRESS)
+set_log_level(False)
 
 # Time-stepping
 t = 0

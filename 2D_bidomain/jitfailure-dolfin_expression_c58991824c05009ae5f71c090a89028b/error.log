@@ -1,0 +1,20 @@
+/tmp/tmp_5dn3wyd/dolfin_expression_c58991824c05009ae5f71c090a89028b.cpp: In member function 'virtual void dolfin::dolfin_expression_c58991824c05009ae5f71c090a89028b::eval(Eigen::Ref<Eigen::Matrix<double, -1, 1> >, Eigen::Ref<const Eigen::Matrix<double, -1, 1> >) const':
+/tmp/tmp_5dn3wyd/dolfin_expression_c58991824c05009ae5f71c090a89028b.cpp:72:34: error: 'Identity' was not declared in this scope
+   72 |           values[0] = sigma_it * Identity(d) + (sigma_il - sigma_it) * outer(fib(msh), fib(msh);
+      |                                  ^~~~~~~~
+/tmp/tmp_5dn3wyd/dolfin_expression_c58991824c05009ae5f71c090a89028b.cpp:72:82: error: 'msh' was not declared in this scope
+   72 |           values[0] = sigma_it * Identity(d) + (sigma_il - sigma_it) * outer(fib(msh), fib(msh);
+      |                                                                                  ^~~
+/tmp/tmp_5dn3wyd/dolfin_expression_c58991824c05009ae5f71c090a89028b.cpp:72:85: error: 'fib' cannot be used as a function
+   72 |           values[0] = sigma_it * Identity(d) + (sigma_il - sigma_it) * outer(fib(msh), fib(msh);
+      |                                                                                     ^
+/tmp/tmp_5dn3wyd/dolfin_expression_c58991824c05009ae5f71c090a89028b.cpp:72:91: error: 'fib' cannot be used as a function
+   72 |           values[0] = sigma_it * Identity(d) + (sigma_il - sigma_it) * outer(fib(msh), fib(msh);
+      |                                                                                        ~~~^~~~~
+/tmp/tmp_5dn3wyd/dolfin_expression_c58991824c05009ae5f71c090a89028b.cpp: In member function 'virtual std::shared_ptr<dolfin::GenericFunction> dolfin::dolfin_expression_c58991824c05009ae5f71c090a89028b::get_generic_function(std::string) const':
+/tmp/tmp_5dn3wyd/dolfin_expression_c58991824c05009ae5f71c090a89028b.cpp:97:11: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+   97 |           if (name == "sigma_it") return generic_function_sigma_it;          if (name == "sigma_il") return generic_function_sigma_il;          if (name == "fib") return generic_function_fib;
+      |           ^~
+/tmp/tmp_5dn3wyd/dolfin_expression_c58991824c05009ae5f71c090a89028b.cpp:97:78: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'if'
+   97 |           if (name == "sigma_it") return generic_function_sigma_it;          if (name == "sigma_il") return generic_function_sigma_il;          if (name == "fib") return generic_function_fib;
+      |                                                                              ^~
