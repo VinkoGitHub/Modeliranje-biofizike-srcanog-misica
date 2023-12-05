@@ -1,9 +1,20 @@
+<<<<<<< HEAD
+=======
+./meshes/01/01.geo
+>>>>>>> 5bbeb96 (Initial commit)
 ./meshes/01/01-350um.vtk
 ./meshes/01/mesh/mesh_0_0.vtu
 ./meshes/01/mesh/mesh01_fiber.xml
 ./meshes/01/mesh/mesh01.xml
+<<<<<<< HEAD
 ./meshes/01/mesh/mesh01_sheet.xml
 ./meshes/average_fibres.xml
+=======
+./meshes/01/mesh/mesh01_tags.xml
+./meshes/01/mesh/mesh01_sheet.xml
+./meshes/average_fibres.xml
+./meshes/average_ID.xml
+>>>>>>> 5bbeb96 (Initial commit)
 ./meshes/23/23-350um.vtk
 ./meshes/average.xml
 ./meshes/average_sheets.xml
