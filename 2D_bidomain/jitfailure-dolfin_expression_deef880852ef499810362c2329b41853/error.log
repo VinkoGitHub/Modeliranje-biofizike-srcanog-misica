@@ -1,4 +1,0 @@
-/tmp/tmpqq__mw56/dolfin_expression_deef880852ef499810362c2329b41853.cpp: In member function 'virtual void dolfin::dolfin_expression_deef880852ef499810362c2329b41853::eval(Eigen::Ref<Eigen::Matrix<double, -1, 1> >, Eigen::Ref<const Eigen::Matrix<double, -1, 1> >) const':
-/tmp/tmpqq__mw56/dolfin_expression_deef880852ef499810362c2329b41853.cpp:61:35: error: 'dot' was not declared in this scope
-   61 |           values[0] = x[1] / sqrt(dot(x, x));
-      |                                   ^~~

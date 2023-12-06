@@ -1,1 +1,0 @@
-# tu prebacit mozda model

@@ -1,3 +1,0 @@
-#!/bin/bash
-# Execute this file to recompile locally
-/home/drvinko/miniconda3/bin/x86_64-conda-linux-gnu-c++ -Wall -shared -fPIC -std=c++11 -O3 -fno-math-errno -fno-trapping-math -ffinite-math-only -I/home/drvinko/miniconda3/include -I/home/drvinko/miniconda3/include/eigen3 -I/home/drvinko/miniconda3/.cache/dijitso/include dolfin_expression_e23c4c2f383c70a6f94ace52f637a0b7.cpp -L/home/drvinko/miniconda3/lib -L/home/drvinko/miniconda3/home/drvinko/miniconda3/lib -L/home/drvinko/miniconda3/.cache/dijitso/lib -Wl,-rpath,/home/drvinko/miniconda3/.cache/dijitso/lib -lmpi -lpetsc -lslepc -lhdf5 -lboost_timer -ldolfin -olibdijitso-dolfin_expression_e23c4c2f383c70a6f94ace52f637a0b7.so
