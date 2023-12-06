@@ -1,0 +1,14 @@
+/tmp/tmp5ancp2n1/dolfin_expression_e9a126c7e35f6e16e27169505b64922f.cpp: In member function 'virtual void dolfin::dolfin_expression_e9a126c7e35f6e16e27169505b64922f::eval(Eigen::Ref<Eigen::Matrix<double, -1, 1> >, Eigen::Ref<const Eigen::Matrix<double, -1, 1> >) const':
+/tmp/tmp5ancp2n1/dolfin_expression_e9a126c7e35f6e16e27169505b64922f.cpp:65:24: error: 'w' was not declared in this scope
+   65 |           values[0] = -w/TAU_IN*pow((V_m - V_MIN),2)*(V_MAX - V_m)/(V_MAX - V_MIN) + 1/TAU_OUT*(V_m - V_MIN)/(V_MAX - V_MIN);
+      |                        ^
+/tmp/tmp5ancp2n1/dolfin_expression_e9a126c7e35f6e16e27169505b64922f.cpp:65:38: error: 'V_m' was not declared in this scope
+   65 |           values[0] = -w/TAU_IN*pow((V_m - V_MIN),2)*(V_MAX - V_m)/(V_MAX - V_MIN) + 1/TAU_OUT*(V_m - V_MIN)/(V_MAX - V_MIN);
+      |                                      ^~~
+/tmp/tmp5ancp2n1/dolfin_expression_e9a126c7e35f6e16e27169505b64922f.cpp: In member function 'virtual double dolfin::dolfin_expression_e9a126c7e35f6e16e27169505b64922f::get_property(std::string) const':
+/tmp/tmp5ancp2n1/dolfin_expression_e9a126c7e35f6e16e27169505b64922f.cpp:77:11: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+   77 |           if (name == "TAU_IN") return TAU_IN;          if (name == "TAU_OUT") return TAU_OUT;          if (name == "V_MIN") return V_MIN;          if (name == "V_MAX") return V_MAX;
+      |           ^~
+/tmp/tmp5ancp2n1/dolfin_expression_e9a126c7e35f6e16e27169505b64922f.cpp:77:57: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'if'
+   77 |           if (name == "TAU_IN") return TAU_IN;          if (name == "TAU_OUT") return TAU_OUT;          if (name == "V_MIN") return V_MIN;          if (name == "V_MAX") return V_MAX;
+      |                                                         ^~
