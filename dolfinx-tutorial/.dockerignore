@@ -1,2 +1,0 @@
-# Don't include the .git in the image. It's big!
-.git
