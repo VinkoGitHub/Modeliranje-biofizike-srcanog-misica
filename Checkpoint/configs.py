@@ -1,6 +1,6 @@
 # time variable parameters
-T = 1000  # final time (ms)
-NUM_STEPS = 1000  # number of time steps
+T = 300  # final time (ms)
+NUM_STEPS = 100  # number of time steps
 DT = T/NUM_STEPS  # time step size (ms)
 
 # mesh parameters
