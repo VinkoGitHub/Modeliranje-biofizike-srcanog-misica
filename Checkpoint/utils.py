@@ -15,6 +15,7 @@ def plot_function(
     VectorSpace: fem.FunctionSpaceBase,
     function_name: str = "function",
     camera_direction: list[float] = [1, 1, 1],
+    shadow: bool = False,
 ):
     # Create a pyvista mesh and attach the values of u
     grid = pyvista.UnstructuredGrid(*vtk_mesh(VectorSpace))
@@ -26,7 +27,7 @@ def plot_function(
     plotter.add_text(
         f"{function_name}", position="upper_edge", font_size=14, color="black"
     )
-    plotter.add_mesh(grid, show_edges=False)
+    plotter.add_mesh(grid, show_edges=False, lighting=shadow)
     plotter.view_vector(camera_direction)
     plotter.show()
 
