@@ -1,47 +1,95 @@
-import numpy as np
+from scipy.integrate import solve_ivp
 from abc import ABC, abstractmethod
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 class BaseCellModel(ABC):
+    V_REST = -85
+
     def __init__(self):
         pass
 
     @abstractmethod
     def f(V: np.ndarray, w: np.ndarray, *args) -> np.ndarray:
-        '''dw/dt = f(V, w)'''
+        """dw/dt = f(V, w)"""
         pass
 
     @abstractmethod
-    def I_ion(
-        V: np.ndarray, w: np.ndarray, *args) -> np.ndarray:
-         '''dV/dt = I_ion(V, w)'''
-         pass
+    def I_ion(V: np.ndarray, w: np.ndarray, *args) -> np.ndarray:
+        """dV/dt = I_ion(V, w)"""
+        pass
+
+    def visualize(self, T: float, V_0: float, w_0: float):
+        """Visualize the action potential given by the model.
+        Input parameters are final time point T, initial transmembrane
+        potential value V_0 and initial gating variable value w_0."""
+
+        def fun(t, z):
+            V, w = z
+            return [
+                self.I_ion(V, w),
+                self.f(V, w),
+            ]
+
+        time = np.linspace(0, T, 500)
+        sol = solve_ivp(fun, [0, T], [V_0, w_0], method="DOP853", t_eval=time)
+
+        plt.plot(sol.t, sol.y[0])
+        plt.xlabel("t")
+        plt.legend(["V", "w"], shadow=True)
+        plt.title("Action potential")
+        plt.show()
+
 
 class BaseDynamicsModel(ABC):
-    def __init__(self, V_REST: float):
-        self.V_REST = V_REST
-    
-    @abstractmethod
-    def F():
-        '''Function should return ufl form F which is weak form formulated as F(u,v,t) = 0.'''
+    def __init__(self):
         pass
 
-# deafult model parameters
-CHI = 2000  # cm^-1
-C_M = 1  # ms*mS/cm^2
-V_REST = -85.0 # mV
-V_PEAK = 40.0 # mV
+    @abstractmethod
+    def solve():
+        """
+        Main function for solving the heart dynamics models.
+        Calling the function solves given equation and saves output .gif file in plots folder.
 
-# conductivities
-sigma_il = 3.0  # mS/cm
-sigma_it = 1.0 # mS/cm
-sigma_in = 0.31525 # mS/cm
-sigma_el = 2.0 # mS/cm
-sigma_et = 1.65 # mS/cm
-sigma_en = 1.3514 # mS/cm
+        Parameters
+        ----------
+        domain : mesh.Mesh
+            Domain on which the equations are solved.
+        cell_model : BaseCellModel
+            One of cell models in cell_models module.
+        V_m_0 : list[list[float], float, float]
+            Initial value for transmembrane potential.
+            First value in the list is the center [x,y,z] in which we define V_m_0.
+            Second value in the list is the radius in which V_m_0 is defined.
+            Third value in the list is the value of V_m_0 in the given domain.
+        ischemia : list[list[float], float, float] or None
+            If given, makes  value for transmembrane potential.
+            First value in the list is the center [x,y,z] of ischemia.
+            Second value in the list is the radius in which ischemia is defined.
+            Third value in the list is the conductivity reduction factor.
+        longitudinal_sheets: list
+            If given, defines the vector field that tells the direction of cardiac sheets.
+            Input can be constants or coordinate-dependent values.
+            e.g. [-1, 0, 0] or [-x[1], x[0], 0] where x[0] means x, x[1] means y and x[2] means z.
+        transversal_sheets: list
+            If given, defines the vector field that tells the direction of the normal of the cardiac sheets.
+            Input can be constants or coordinate-dependent values.
+            e.g. [-1, 0, 0] or [-x[1], x[0], 0] where x[0] means x, x[1] means y and x[2] means z.
+        signal_point: list[float]
+            A point at which we track V_m.
+        camera: list[float] | None = None
+            Camera direction vector. Defines the angle from which final solution will be recorded.
+        gif_name: str
+            Name of the .gif file that will be saved.
 
-SIGMA_IL = sigma_il/C_M/CHI # cm^2/ms
-SIGMA_IT = sigma_it/C_M/CHI # cm^2/ms
-SIGMA_IN = sigma_in/C_M/CHI # cm^2/ms
-SIGMA_EL = sigma_el/C_M/CHI # cm^2/ms
-SIGMA_ET = sigma_et/C_M/CHI # cm^2/ms
-SIGMA_EN = sigma_en/C_M/CHI # cm^2/ms
+        Returns
+        -------
+        V_m_n : fem.Function
+            A dolfinx Function containing V_m at time T.
+        signal: list[float]
+            A list containing the values of V_m at all time points at a given signal_point
+
+
+        """
+        pass

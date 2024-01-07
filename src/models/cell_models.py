@@ -1,17 +1,28 @@
+from src.models.base_models import BaseCellModel
 import numpy as np
-from base_models import BaseCellModel
+
 
 class ReparametrizedFitzHughNagumo(BaseCellModel):
+    a = 0.13
+    b = 0.013
+    c1 = 0.26
+    c2 = 0.1
+    c3 = 1.0
+    V_PEAK = 40
+    V_REST = -85
+    V_AMP = V_PEAK - V_REST
+    V_TH = V_REST + a * V_AMP
+
     def __init__(self):
         pass
 
-    def f(V: np.ndarray, w: np.ndarray, b=0.013, c3=1.0, V_REST=-85) -> np.ndarray:
-        return b * (V - V_REST - c3 * w)
+    def f(self, V: np.ndarray, w: np.ndarray) -> np.ndarray:
+        return self.b * (V - self.V_REST - self.c3 * w)
 
-    def I_ion(V: np.ndarray, w: np.ndarray, a=0.13, c1=0.26, c2=0.1, V_REST=-85, V_PEAK=40) -> np.ndarray:
-        V_AMP = V_PEAK - V_REST
-        V_TH = V_REST + a * V_AMP
+    def I_ion(self, V: np.ndarray, w: np.ndarray) -> np.ndarray:
+        V_AMP = self.V_PEAK - self.V_REST
+        V_TH = self.V_REST + self.a * V_AMP
         return (
-            c1 / V_AMP**2 * (V - V_REST) * (V - V_TH) * (V_PEAK - V)
-            - c2 / V_AMP * (V - V_REST) * w
+            self.c1 / V_AMP**2 * (V - self.V_REST) * (V - V_TH) * (self.V_PEAK - V)
+            - self.c2 / V_AMP * (V - self.V_REST) * w
         )

@@ -1,14 +1,15 @@
 from dolfinx import mesh, fem, geometry, io
 from dolfinx.plot import vtk_mesh
-from configs import *
 import numpy as np
 import pyvista
 from mpi4py import MPI
 
 
 # Managing meshes
-def create_mesh(*args):
-    return mesh.create_unit_square(*args)
+def create_mesh(Nx: int, Ny: int):
+    """Create a unit square mesh which contains Nx points
+    in x-direction and Ny points in y-direction."""
+    return mesh.create_unit_square(MPI.COMM_WORLD, Nx, Ny)
 
 
 def import_mesh(filename: str):
@@ -20,13 +21,13 @@ def import_mesh(filename: str):
 # fem.Function utilities
 def plot_function(
     function: fem.Function,
-    VectorSpace: fem.FunctionSpaceBase,
     function_name: str = "function",
     camera_direction: list[float] = [1, 1, 1],
     shadow: bool = False,
 ):
+    """Plot a dolfinx fem Function."""
     # Create a pyvista mesh and attach the values of u
-    grid = pyvista.UnstructuredGrid(*vtk_mesh(VectorSpace))
+    grid = pyvista.UnstructuredGrid(*vtk_mesh(function.function_space))
     grid.point_data["function"] = function.x.array
     grid.set_active_scalars("function")
 
