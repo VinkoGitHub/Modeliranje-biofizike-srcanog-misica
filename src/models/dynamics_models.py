@@ -1,6 +1,7 @@
 from src.models.base_models import BaseCellModel, BaseDynamicsModel
 from dolfinx.fem.petsc import LinearProblem
 from dolfinx import fem, mesh, plot
+import matplotlib.pyplot as plt
 import src.utils as utils
 from tqdm import tqdm
 import numpy as np
@@ -36,67 +37,38 @@ class BidomainModel(BaseDynamicsModel):
     def __init__(self):
         pass
 
-    def initial_V_m(self):
-        """A function used to define initial transmembrane potential.
-        This function should return a tuple containing another function that
-        takes ``x`` as an input and outputs a mathematical condition
-        for an area in which initial ``V_m`` is different from the rest value
-        and the initial value for V_m in that area.
-
-        Example:
-
-        >>> def initial_V_m():
-        >>>     return (lambda x: x[0] < 0.5, 0.0)
-        """
-        raise NotImplementedError(
-            "Method initial_V_m must be implemented for the model to work."
-        )
-
-    def ischemia(slf):
-        """A function used to define ischemia on domain.
-        This function should return a tuple containing a ``ufl`` form that
-        outputs a mathematical condition for an area in which conductivity is different
-        from the rest value (ischemia domain) and the value of M_i and M_e in that domain.
-
-        Example:
-
-        >>> def ischemia():
-        >>>     return (x[0] < 0.5, 0.1, 0.05)
-        """
-        return None
-
-    def solve(
+    def setup(
         self,
-        T: float,
-        steps: int,
         domain: mesh.Mesh,
-        cell_model: BaseCellModel,
         longitudinal_fibres: list | None = None,
         transversal_fibres: list | None = None,
-        signal_point: list[float] | None = None,
-        camera: list[float] | None = None,
-        gif_name: str = "V_m.gif",
     ):
-        self.solve.__doc__
+        self.setup.__doc__
 
         # Setting up meshes, function spaces and functions
         element = ufl.FiniteElement("P", domain.ufl_cell(), degree=2)
-        W = fem.FunctionSpace(domain, ufl.MixedElement(element, element))
-        V1, sub1 = W.sub(0).collapse()
-        V2, sub2 = W.sub(1).collapse()
+        self.W = fem.FunctionSpace(domain, ufl.MixedElement(element, element))
+        self.V1, self.sub1 = self.W.sub(0).collapse()
+        self.V2, self.sub2 = self.W.sub(1).collapse()
 
         # Define test and trial functions
-        psi, phi = ufl.TestFunctions(W)
-        V_m, U_e = ufl.TrialFunctions(W)
+        self.psi, self.phi = ufl.TestFunctions(self.W)
+        self.V_m, self.U_e = ufl.TrialFunctions(self.W)
 
         # Define fem functions, spatial coordinates and the dimension of a mesh
-        v_, w, V_m_n = fem.Function(W), fem.Function(V1), fem.Function(V1)
-        x, self.d = ufl.SpatialCoordinate(domain), domain.topology.dim
+        self.v_, self.w, self.V_m_n = (
+            fem.Function(self.W),
+            fem.Function(self.V1),
+            fem.Function(self.V1),
+        )
+
+        self.x = ufl.SpatialCoordinate(domain)
+        self.d = domain.topology.dim
 
         # Defining initial conditions for transmembrane potential
-        cells = fem.locate_dofs_geometrical(V1, self.initial_V_m()[0])
-        V_m_n.x.array[:] = cell_model.V_REST
-        V_m_n.x.array[cells] = np.full_like(cells, self.initial_V_m()[1])
+        cells = fem.locate_dofs_geometrical(self.V1, self.initial_V_m()[0])
+        self.V_m_n.x.array[:] = self.V_REST
+        self.V_m_n.x.array[cells] = np.full_like(cells, self.initial_V_m()[1])
 
         if longitudinal_fibres is not None and transversal_fibres is not None:
             # Muscle sheets
@@ -105,12 +77,12 @@ class BidomainModel(BaseDynamicsModel):
 
             # Healthy conductivities
             self.M_i = (
-                self.SIGMA_IT * ufl.Identity(self.d)
+                self.SIGMA_IT * ufl.Identity(len(longitudinal_fibres))
                 + (self.SIGMA_IL - self.SIGMA_IT) * ufl.outer(sheet_l, sheet_l)
                 + (self.SIGMA_IN - self.SIGMA_IT) * ufl.outer(sheet_n, sheet_n)
             )
             self.M_e = (
-                self.SIGMA_ET * ufl.Identity(self.d)
+                self.SIGMA_ET * ufl.Identity(len(transversal_fibres))
                 + (self.SIGMA_EL - self.SIGMA_ET) * ufl.outer(sheet_l, sheet_l)
                 + (self.SIGMA_EN - self.SIGMA_ET) * ufl.outer(sheet_n, sheet_n)
             )
@@ -122,43 +94,58 @@ class BidomainModel(BaseDynamicsModel):
         # Ishemic conductivities
         if self.ischemia() is not None:
             self.M_i = ufl.conditional(
-                self.ischemia()[0],
+                self.ischemia()[0](self.x),
                 self.ischemia()[1],
                 self.M_i,
             )
 
             self.M_e = ufl.conditional(
-                self.ischemia()[0],
+                self.ischemia()[0](self.x),
                 self.ischemia()[1],
                 self.M_e,
             )
+
+    def solve(
+        self,
+        T: float,
+        steps: int,
+        cell_model: BaseCellModel,
+        signal_point: list[float] | None = None,
+        camera: list[float] | None = None,
+        gif_name: str = "V_m.gif",
+    ):
+        self.solve.__doc__
 
         DT = T / steps
 
         # Defining a ufl weak form and corresponding linear problem
         F = (
-            (V_m - V_m_n) / DT * phi * ufl.dx
+            (self.V_m - self.V_m_n) / DT * self.phi * ufl.dx
             + ufl.inner(
-                ufl.dot(self.M_i, ufl.grad(V_m / 2 + V_m_n / 2 + U_e)), ufl.grad(phi)
+                ufl.dot(self.M_i, ufl.grad(self.V_m / 2 + self.V_m_n / 2 + self.U_e)),
+                ufl.grad(self.phi),
             )
             * ufl.dx
             + (
-                ufl.inner(ufl.dot(self.M_i + self.M_e, ufl.grad(U_e)), ufl.grad(psi))
+                ufl.inner(
+                    ufl.dot(self.M_i + self.M_e, ufl.grad(self.U_e)), ufl.grad(self.psi)
+                )
                 * ufl.dx
                 + ufl.inner(
-                    ufl.dot(self.M_i, ufl.grad(V_m / 2 + V_m_n / 2)), ufl.grad(psi)
+                    ufl.dot(self.M_i, ufl.grad(self.V_m / 2 + self.V_m_n / 2)),
+                    ufl.grad(self.psi),
                 )
                 * ufl.dx
             )
         )
 
-        problem = LinearProblem(a=ufl.lhs(F), L=ufl.rhs(F), u=v_)
+        problem = LinearProblem(a=ufl.lhs(F), L=ufl.rhs(F), u=self.v_)
 
         # Making a plotting environment
-        grid = pyvista.UnstructuredGrid(*plot.vtk_mesh(V1))
+        grid = pyvista.UnstructuredGrid(*plot.vtk_mesh(self.V1))
         plotter = pyvista.Plotter(notebook=True, off_screen=False)
         plotter.open_gif("gifs/" + gif_name, fps=int(steps / 10))
-        grid.point_data["V_m"] = V_m_n.x.array
+        grid.point_data["V_m"] = self.V_m_n.x.array
         plotter.add_mesh(
             grid,
             show_edges=False,
@@ -168,47 +155,54 @@ class BidomainModel(BaseDynamicsModel):
         )
 
         # List of signal values for each time step
-        signal = []
-        time = np.linspace(0, T, steps)
+        self.signal_point = signal_point
+        self.signal = []
+        self.time = np.linspace(0, T, steps)
 
         # Iterate through time
-        for t in tqdm(time, desc="Solving problem"):
+        for t in tqdm(self.time, desc="Solving problem"):
             # Appending the transmembrane potential value at some point to a list
             if signal_point != None:
-                signal.append(
-                    utils.evaluate_function_at_point(V_m_n, domain, signal_point)
+                self.signal.append(
+                    utils.evaluate_function_at_point(self.V_m_n, signal_point)
                 )
 
             # 1st step of Strang splitting
-            k1_V = cell_model.I_ion(V_m_n.x.array[:], w.x.array[:])
-            k2_V = cell_model.I_ion(V_m_n.x.array[:] + DT / 2 * k1_V, w.x.array[:])
-            V_m_n.x.array[:] = V_m_n.x.array[:] + DT / 4 * (k1_V + k2_V)
+            k1_V = cell_model.I_ion(self.V_m_n.x.array[:], self.w.x.array[:])
+            k2_V = cell_model.I_ion(
+                self.V_m_n.x.array[:] + DT / 2 * k1_V, self.w.x.array[:]
+            )
+            self.V_m_n.x.array[:] = self.V_m_n.x.array[:] + DT / 4 * (k1_V + k2_V)
 
-            k1_w = cell_model.f(V_m_n.x.array[:], w.x.array[:])
-            k2_w = cell_model.f(V_m_n.x.array[:], w.x.array[:] + DT / 2 * k1_w)
-            w.x.array[:] = w.x.array[:] + DT / 4 * (k1_w + k2_w)
+            k1_w = cell_model.f(self.V_m_n.x.array[:], self.w.x.array[:])
+            k2_w = cell_model.f(
+                self.V_m_n.x.array[:], self.w.x.array[:] + DT / 2 * k1_w
+            )
+            self.w.x.array[:] = self.w.x.array[:] + DT / 4 * (k1_w + k2_w)
 
             # 2nd step of Strang splitting
             problem.solve()
-            v_.x.array[sub2] = v_.x.array[sub2] - np.mean(
-                v_.x.array[sub2]
+            self.v_.x.array[self.sub2] = self.v_.x.array[self.sub2] - np.mean(
+                self.v_.x.array[self.sub2]
             )  # Normalize U_e to zero mean
 
             # Update solution for V_m
-            V_m_n.x.array[:] = v_.x.array[sub1]
+            self.V_m_n.x.array[:] = self.v_.x.array[self.sub1]
 
             # 3rd step of Strang splitting
-            k1_V = cell_model.I_ion(V_m_n.x.array[:], w.x.array[:])
-            k2_V = cell_model.I_ion(V_m_n.x.array[:] + DT * k1_V, w.x.array[:])
-            V_m_n.x.array[:] = V_m_n.x.array[:] + DT / 2 * (k1_V + k2_V)
+            k1_V = cell_model.I_ion(self.V_m_n.x.array[:], self.w.x.array[:])
+            k2_V = cell_model.I_ion(
+                self.V_m_n.x.array[:] + DT * k1_V, self.w.x.array[:]
+            )
+            self.V_m_n.x.array[:] = self.V_m_n.x.array[:] + DT / 2 * (k1_V + k2_V)
 
-            k1_w = cell_model.f(V_m_n.x.array[:], w.x.array[:])
-            k2_w = cell_model.f(V_m_n.x.array[:], w.x.array[:] + DT * k1_w)
-            w.x.array[:] = w.x.array[:] + DT / 2 * (k1_w + k2_w)
+            k1_w = cell_model.f(self.V_m_n.x.array[:], self.w.x.array[:])
+            k2_w = cell_model.f(self.V_m_n.x.array[:], self.w.x.array[:] + DT * k1_w)
+            self.w.x.array[:] = self.w.x.array[:] + DT / 2 * (k1_w + k2_w)
 
             # Update plot
             plotter.clear()
-            grid.point_data["V_m"] = V_m_n.x.array[:]
+            grid.point_data["V_m"] = self.V_m_n.x.array[:]
             plotter.add_mesh(
                 grid,
                 show_edges=False,
@@ -223,7 +217,39 @@ class BidomainModel(BaseDynamicsModel):
 
         plotter.close()
 
-        return V_m_n, signal
+    def plot_ischemia(self, *args):
+        """A function that plots ischemia parts of the domain.\n
+        Plotting parameters can be passed."""
+
+        if self.ischemia() is None:
+            raise NotImplementedError("Ischemia function not implemented!")
+
+        fun = fem.Function(self.V1)
+        cells = fem.locate_dofs_geometrical(self.V1, self.ischemia()[0])
+
+        fun.x.array[:] = 0
+        fun.x.array[cells] = np.full_like(cells, 1)
+
+        utils.plot_function(fun, "ischemia", *args)
+
+    def plot_initial_V_m(self, *args):
+        """A function that plots initial transmembrane potential.\n
+        Plotting parameters can be passed."""
+        utils.plot_function(self.V_m_n, "initial V_m", *args)
+
+    def plot_signal(self, *args):
+        """A function that plots initial transmembrane potential.\n
+        Plotting parameters can be passed."""
+
+        if self.signal_point == None:
+            raise ValueError("Signal point must be specified when solving the model.")
+
+        plt.plot(self.time, self.signal)
+        plt.xlabel("time [ms]")
+        plt.ylabel("signal [mV]")
+        plt.title(
+            "Time dependence of $V_m$ at " + str(self.signal_point),
+        )
 
 
 class MonodomainModel(BaseDynamicsModel):

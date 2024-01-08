@@ -7,4 +7,10 @@
  3. Define a dynamics model class which inherits from one of dynamic modules from a dynamics_models module.\
  Define ``initial_V_m`` method for that class as it is requested in the description of the method.
 
- 4. Run a ``solve`` method of a model with its parameters.
+ 4. Run a ``setup`` method of the model to set up functions, function spaces, initial conditions etc. After that, you can visualize initial conditions and ischemias before solving the equations.
+
+ 4. In the end, run a ``solve`` method of a model with its parameters. You can access the solutions as attributes of the model.
+
+Example:
+
+ >>>
