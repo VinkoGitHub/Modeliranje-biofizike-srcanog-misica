@@ -52,7 +52,7 @@ class BidomainModel(BaseDynamicsModel):
             "Method initial_V_m must be implemented for the model to work."
         )
 
-    def ischemia():
+    def ischemia(slf):
         """A function used to define ischemia on domain.
         This function should return a tuple containing a ``ufl`` form that
         outputs a mathematical condition for an area in which conductivity is different
@@ -91,7 +91,7 @@ class BidomainModel(BaseDynamicsModel):
 
         # Define fem functions, spatial coordinates and the dimension of a mesh
         v_, w, V_m_n = fem.Function(W), fem.Function(V1), fem.Function(V1)
-        x, d = ufl.SpatialCoordinate(domain), domain.topology.dim
+        x, self.d = ufl.SpatialCoordinate(domain), domain.topology.dim
 
         # Defining initial conditions for transmembrane potential
         cells = fem.locate_dofs_geometrical(V1, self.initial_V_m()[0])
@@ -105,19 +105,19 @@ class BidomainModel(BaseDynamicsModel):
 
             # Healthy conductivities
             self.M_i = (
-                self.SIGMA_IT * ufl.Identity(d)
+                self.SIGMA_IT * ufl.Identity(self.d)
                 + (self.SIGMA_IL - self.SIGMA_IT) * ufl.outer(sheet_l, sheet_l)
                 + (self.SIGMA_IN - self.SIGMA_IT) * ufl.outer(sheet_n, sheet_n)
             )
             self.M_e = (
-                self.SIGMA_ET * ufl.Identity(d)
+                self.SIGMA_ET * ufl.Identity(self.d)
                 + (self.SIGMA_EL - self.SIGMA_ET) * ufl.outer(sheet_l, sheet_l)
                 + (self.SIGMA_EN - self.SIGMA_ET) * ufl.outer(sheet_n, sheet_n)
             )
 
         else:
-            self.M_i = self.SIGMA_IT * ufl.Identity(d)
-            self.M_e = self.SIGMA_ET * ufl.Identity(d)
+            self.M_i = self.SIGMA_IT * ufl.Identity(self.d)
+            self.M_e = self.SIGMA_ET * ufl.Identity(self.d)
 
         # Ishemic conductivities
         if self.ischemia() is not None:

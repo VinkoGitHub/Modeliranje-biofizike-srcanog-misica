@@ -6,11 +6,16 @@ from mpi4py import MPI
 
 
 # Managing meshes
-def create_mesh(Nx: int, Ny: int):
+def create_square(Nx: int, Ny: int):
     """Create a unit square mesh which contains Nx points
     in x-direction and Ny points in y-direction."""
     return mesh.create_unit_square(MPI.COMM_WORLD, Nx, Ny)
 
+def create_cube(Nx: int, Ny: int, Nz: int):
+    """Create a unit box mesh which contains Nx points
+    in x-direction, Ny points in y-direction and Nz points in
+    z-direction."""
+    return mesh.create_unit_cube(MPI.COMM_WORLD, Nx, Ny, Nz)
 
 def import_mesh(filename: str):
     """Import mesh from an .xdmf file."""
