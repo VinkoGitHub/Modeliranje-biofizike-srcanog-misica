@@ -24,6 +24,7 @@ def plot_function(
     function_name: str = "function",
     camera_direction: list[float] = [1, 1, 1],
     shadow: bool = False,
+    show_mesh: bool = True
 ):
     """Plot a dolfinx fem Function."""
     # Create a pyvista mesh and attach the values of u
@@ -36,7 +37,7 @@ def plot_function(
     plotter.add_text(
         f"{function_name}", position="upper_edge", font_size=14, color="black"
     )
-    plotter.add_mesh(grid, show_edges=False, lighting=shadow)
+    plotter.add_mesh(grid, show_edges=show_mesh, lighting=shadow)
     plotter.view_vector(camera_direction)
     plotter.show()
 

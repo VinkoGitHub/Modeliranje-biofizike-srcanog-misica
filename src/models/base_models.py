@@ -51,23 +51,22 @@ class BaseDynamicsModel(ABC):
         """
         Main function for solving the heart dynamics models.
         Calling the function solves given equation and saves output .gif file in plots folder.
+        Initial ``V_m``, conductivities ``M_i`` and ``M_e`` and ischemia location and type can be
+        defined through parameters described below or by accesing them as attributes and methods of
+        the class. First method is good for testing purposes while second method is better suited
+        for more sophisticated models.
 
         Parameters
         ----------
+        T : float
+            Time point at which simulation ends.
+        steps : int
+            Number of steps in solving iterator. Also, the number of interpolation points
+            in time interval [0, T].
         domain : mesh.Mesh
             Domain on which the equations are solved.
         cell_model : BaseCellModel
             One of cell models in cell_models module.
-        V_m_0 : list[list[float], float, float]
-            Initial value for transmembrane potential.
-            First value in the list is the center [x,y,z] in which we define V_m_0.
-            Second value in the list is the radius in which V_m_0 is defined.
-            Third value in the list is the value of V_m_0 in the given domain.
-        ischemia : list[list[float], float, float] or None
-            If given, makes  value for transmembrane potential.
-            First value in the list is the center [x,y,z] of ischemia.
-            Second value in the list is the radius in which ischemia is defined.
-            Third value in the list is the conductivity reduction factor.
         longitudinal_sheets: list
             If given, defines the vector field that tells the direction of cardiac sheets.
             Input can be constants or coordinate-dependent values.
@@ -77,7 +76,8 @@ class BaseDynamicsModel(ABC):
             Input can be constants or coordinate-dependent values.
             e.g. [-1, 0, 0] or [-x[1], x[0], 0] where x[0] means x, x[1] means y and x[2] means z.
         signal_point: list[float]
-            A point at which we track V_m.
+            If given, defines a point at which we track V_m.
+            A point must be a part of a domain.
         camera: list[float] | None = None
             Camera direction vector. Defines the angle from which final solution will be recorded.
         gif_name: str
