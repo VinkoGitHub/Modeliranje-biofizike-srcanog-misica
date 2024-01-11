@@ -166,3 +166,12 @@ def RK3_step(f: Callable, dt: float, v: np.ndarray, *args) -> np.ndarray:
     k2 = f(v + dt / 2 * k1, *args)
     k3 = f(v - dt * k1 + 2 * dt * k2, *args)
     return v + dt / 6 * (k1 + 4 * k2 + k3)
+
+
+def RK4_step(f: Callable, dt: float, v: np.ndarray, *args) -> np.ndarray:
+    """Napisati dokumentaciju!"""
+    k1 = f(v, *args)
+    k2 = f(v + dt / 2 * k1, *args)
+    k3 = f(v + dt / 2 * k2, *args)
+    k4 = f(v + dt * k3, *args)
+    return v + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)

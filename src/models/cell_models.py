@@ -1,5 +1,5 @@
 from src.models.base_models import BaseCellModel, Common
-from src.utils import RK2_step, RK3_step
+from src.utils import RK2_step, RK3_step, RK4_step
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from dolfinx import fem, mesh
@@ -180,3 +180,172 @@ class Noble(Common):
             sol.y[2][400],
             sol.y[3][400],
         )
+
+
+class BeelerReuter(Common):
+    C_m = 1.0
+
+    def __init__(
+        self,
+        domain: mesh.Mesh,
+        c_0: float = 0.5,
+        m_0: float = 0.5,
+        h_0: float = 0.5,
+        j_0: float = 0.5,
+        d_0: float = 0.5,
+        f_0: float = 0.5,
+        x_0: float = 0.5,
+    ):
+        super().__init__(domain)
+        self.c = fem.Function(self.V1)
+        self.c.x.array[:] = c_0
+        self.m = fem.Function(self.V1)
+        self.m.x.array[:] = m_0
+        self.h = fem.Function(self.V1)
+        self.h.x.array[:] = h_0
+        self.j = fem.Function(self.V1)
+        self.j.x.array[:] = j_0
+        self.d = fem.Function(self.V1)
+        self.d.x.array[:] = d_0
+        self.f = fem.Function(self.V1)
+        self.f.x.array[:] = f_0
+        self.x = fem.Function(self.V1)
+        self.x.x.array[:] = x_0
+
+    def step_V_m(self, dt: float, V: np.ndarray) -> np.ndarray:
+        c = self.c.x.array
+        m = self.m.x.array
+        h = self.h.x.array
+        j = self.j.x.array
+        d = self.d.x.array
+        f = self.f.x.array
+        x = self.x.x.array
+
+        I_Na = (4 * m**3 * h * j + 0.003) * (V - 50)
+        I_K = (
+            1.4
+            * (np.exp(0.04 * (V + 85)) - 1)
+            / (np.exp(0.08 * (V + 53)) + np.exp(0.04 * (V + 53)))
+        )
+        I_x = 0.8 * x * (np.exp(0.04 * (V + 77)) - 1) / np.exp(0.04 * (V + 35))
+        I_s = 0.09 * f * d * (V + 66.18 + 13.0287 * (np.log(c) - 7 * np.log(10)))
+        I_app = 0.0
+
+        dVdt = lambda V: (-1 / self.C_m * (I_Na + I_K + I_x + I_s + I_app))
+
+        dcdt = lambda c: 0.07 * (1 - c) - I_s
+
+        def blueprint(C1, C2, C3, C4, C5, v0):
+            return (C1 * np.exp(C2 * (V - v0)) + C3 * (V - v0)) / (
+                1 + C4 * np.exp(C5 * (V - v0))
+            )
+
+        dmdt = lambda m: (
+            blueprint(0.0, 0.0, 1.0, -1.0, -0.1, -47.0) * (1 - m)
+            - blueprint(40.0, -0.5599, 0.0, 0.0, 0.0, -72.0) * m
+        )
+        dhdt = lambda h: (
+            blueprint(0.126, -0.25, 0.0, 0.0, 0.0, -72.0) * (1 - h)
+            - blueprint(1.7, 0.0, 0.0, 1.0, -0.082, -22.5) * h
+        )
+        djdt = lambda j: (
+            blueprint(0.055, -0.25, 0.0, 1.0, -0.2, -78.0) * (1 - j)
+            - blueprint(0.3, 0.0, 0.0, 1.0, -0.1, -32.0) * j
+        )
+        dddt = lambda d: (
+            blueprint(0.095, -0.01, 0.0, 1.0, -0.0719, 5.0) * (1 - d)
+            - blueprint(0.07, -0.0171, 0.0, 1.0, 0.05, -44.0) * d
+        )
+        dfdt = lambda f: (
+            blueprint(0.012, -125.0, 0.0, 1.0, 0.15, -28.0) * (1 - f)
+            - blueprint(0.0065, -0.02, 0.0, 1.0, -5.0, -30.0) * f
+        )
+        dxdt = lambda x: (
+            blueprint(0.0005, -0.0833, 0.0, 1.0, 0.0571, -50.0) * (1 - x)
+            - blueprint(0.0013, -0.06, 0.0, 1.0, 0.04, -20.0) * x
+        )
+
+        self.m.x.array[:] = RK4_step(dmdt, dt, m)
+        self.h.x.array[:] = RK4_step(dhdt, dt, h)
+        self.j.x.array[:] = RK4_step(djdt, dt, j)
+        self.d.x.array[:] = RK4_step(dddt, dt, d)
+        self.f.x.array[:] = RK4_step(dfdt, dt, f)
+        self.x.x.array[:] = RK4_step(dxdt, dt, x)
+        self.c.x.array[:] = RK4_step(dcdt, dt, c)
+
+        return RK4_step(dVdt, dt, V)
+
+    def visualize(
+        self,
+        T: float,
+        V_0: float,
+        c_0: float = 0.0,
+        m_0: float = 0.0,
+        h_0: float = 0.0,
+        j_0: float = 0.0,
+        d_0: float = 0.0,
+        f_0: float = 0.0,
+        x_0: float = 0.0,
+    ):
+        def fun(t, z):
+            V, c, m, h, j, d, f, x = z
+
+            I_Na = (4 * m**3 * h * j + 0.003) * (V - 50)
+            I_K = (
+                1.4
+                * (np.exp(0.04 * (V + 85)) - 1)
+                / (np.exp(0.08 * (V + 53)) + np.exp(0.04 * (V + 53)))
+            )
+            I_x = 0.8 * x * (np.exp(0.04 * (V + 77)) - 1) / np.exp(0.04 * (V + 35))
+            I_s = 0.09 * f * d * (V + 66.18 + 13.0287 * (np.log(c) - 7 * np.log(10)))
+            I_app = 0.0
+
+            dVdt = -1 / self.C_m * (I_Na + I_K + I_x + I_s + I_app)
+
+            dcdt = 0.07 * (1 - c) - I_s
+
+            def blueprint(C1, C2, C3, C4, C5, v0):
+                return (C1 * np.exp(C2 * (V - v0)) + C3 * (V - v0)) / (
+                    1 + C4 * np.exp(C5 * (V - v0))
+                )
+
+            dmdt = (
+                blueprint(0.0, 0.0, 1.0, -1.0, -0.1, -47.0) * (1 - m)
+                - blueprint(40.0, -0.5599, 0.0, 0.0, 0.0, -72.0) * m
+            )
+            dhdt = (
+                blueprint(0.126, -0.25, 0.0, 0.0, 0.0, -72.0) * (1 - h)
+                - blueprint(1.7, 0.0, 0.0, 1.0, -0.082, -22.5) * h
+            )
+            djdt = (
+                blueprint(0.055, -0.25, 0.0, 1.0, -0.2, -78.0) * (1 - j)
+                - blueprint(0.3, 0.0, 0.0, 1.0, -0.1, -32.0) * j
+            )
+            dddt = (
+                blueprint(0.095, -0.01, 0.0, 1.0, -0.0719, 5.0) * (1 - d)
+                - blueprint(0.07, -0.0171, 0.0, 1.0, 0.05, -44.0) * d
+            )
+            dfdt = (
+                blueprint(0.012, -125.0, 0.0, 1.0, 0.15, -28.0) * (1 - f)
+                - blueprint(0.0065, -0.02, 0.0, 1.0, -5.0, -30.0) * f
+            )
+            dxdt = (
+                blueprint(0.0005, -0.0833, 0.0, 1.0, 0.0571, -50.0) * (1 - x)
+                - blueprint(0.0013, -0.06, 0.0, 1.0, 0.04, -20.0) * x
+            )
+            return [dVdt, dcdt, dmdt, dhdt, djdt, dddt, dfdt, dxdt]
+
+        time = np.linspace(0, T, 1000)
+        sol = solve_ivp(
+            fun,
+            [0, T],
+            [V_0, c_0, m_0, h_0, j_0, d_0, f_0, x_0],
+            method="DOP853",
+            t_eval=time,
+        )
+
+        plt.plot(sol.t, sol.y[0])
+        plt.xlabel("$t$")
+        plt.ylabel("$V_m$")
+        plt.title("Action potential")
+        plt.show()
