@@ -1,17 +1,28 @@
-from scipy.integrate import solve_ivp
-from abc import ABC, abstractmethod
-import matplotlib.pyplot as plt
+from abc import ABCMeta, abstractmethod
+from dolfinx import fem
 import numpy as np
+import ufl
 
 
-class BaseCellModel(ABC):
-    V_REST = -85
+class Common:
+    """Common class used by multiple other classes."""
 
-    def __init__(self):
-        pass
+    def __init__(self, domain):
+        self.domain = domain
+        # Setting up meshes, function spaces and functions
+        self.element = ufl.FiniteElement("P", self.domain.ufl_cell(), degree=2)
+        self.W = fem.FunctionSpace(
+            self.domain, ufl.MixedElement(self.element, self.element)
+        )
+        self.V1, self.sub1 = self.W.sub(0).collapse()
+        self.V2, self.sub2 = self.W.sub(1).collapse()
+        self.x = ufl.SpatialCoordinate(self.domain)
+        self.d = self.domain.topology.dim
 
+
+class BaseCellModel(metaclass=ABCMeta):
     @abstractmethod
-    def step(dt: float, V: np.ndarray, *args) -> list[np.ndarray]:
+    def step_V_m(dt: float, V: np.ndarray, *args) -> list[np.ndarray]:
         """
         A function that computes a solution of the cell dynamics equations
         for one timestep --> [``dV/dt = I_ion(V, w)``] and gating variables equations.
@@ -36,32 +47,17 @@ class BaseCellModel(ABC):
         """
         pass
 
-    def visualize(self, T: float, V_0: float, w_0: float):
-        """Visualize the action potential given by the model.
+    @abstractmethod
+    def visualize(self):
+        """
+        Visualize the action potential given by the model.
         Input parameters are final time point T, initial transmembrane
-        potential value V_0 and initial gating variable value w_0."""
-
-        def fun(t, z):
-            V, w = z
-            return [
-                self.I_ion(V, w),
-                self.f(V, w),
-            ]
-
-        time = np.linspace(0, T, 500)
-        sol = solve_ivp(fun, [0, T], [V_0, w_0], method="DOP853", t_eval=time)
-
-        plt.plot(sol.t, sol.y[0])
-        plt.xlabel("t")
-        plt.legend(["V", "w"], shadow=True)
-        plt.title("Action potential")
-        plt.show()
-
-
-class BaseDynamicsModel(ABC):
-    def __init__(self):
+        potential value V_0 and initial gating variable value w_0.
+        """
         pass
 
+
+class BaseDynamicsModel(metaclass=ABCMeta):
     @abstractmethod
     def initial_V_m(self):
         """A function used to define initial transmembrane potential.
@@ -78,45 +74,6 @@ class BaseDynamicsModel(ABC):
         raise NotImplementedError(
             "Method initial_V_m must be implemented for the model to work."
         )
-
-    @abstractmethod
-    def setup(self):
-        """
-        Calling this function sets up the meshes, function spaces, functions etc. After calling this
-        function, you can visualize and inspect initial V_m and ischemia details before
-        solving actual equations.\n
-        Initial ``V_m``, conductivities ``M_i`` and ``M_e`` and ischemia location and type can be
-        defined through parameters described below or by accesing them as attributes and methods of
-        the class. First method is good for testing purposes while second method is better suited
-        for more sophisticated models.
-
-        Parameters
-        ----------
-        T : float
-            Time point at which simulation ends.
-        steps : int
-            Number of steps in solving iterator. Also, the number of interpolation points
-            in time interval [0, T].
-        domain : mesh.Mesh
-            Domain on which the equations are solved.
-        cell_model : BaseCellModel
-            One of cell models in cell_models module.
-        longitudinal_sheets: list
-            If given, defines the vector field that tells the direction of cardiac sheets.
-            Input can be constants or coordinate-dependent values.
-            e.g. [-1, 0, 0] or [-x[1], x[0], 0] where x[0] means x, x[1] means y and x[2] means z.
-        transversal_sheets: list
-            If given, defines the vector field that tells the direction of the normal of the cardiac sheets.
-            Input can be constants or coordinate-dependent values.
-            e.g. [-1, 0, 0] or [-x[1], x[0], 0] where x[0] means x, x[1] means y and x[2] means z.
-        signal_point: list[float]
-            If given, defines a point at which we track V_m.
-            A point must be a part of a domain.
-        camera: list[float] | None = None
-            Camera direction vector. Defines the angle from which final solution will be recorded.
-        gif_name: str
-            Name of the .gif file that will be saved."""
-        pass
 
     @abstractmethod
     def solve(self):

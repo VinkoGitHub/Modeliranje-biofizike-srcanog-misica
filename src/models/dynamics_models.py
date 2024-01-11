@@ -1,4 +1,4 @@
-from src.models.base_models import BaseCellModel, BaseDynamicsModel
+from src.models.base_models import *
 from dolfinx.fem.petsc import LinearProblem
 from dolfinx import fem, mesh, plot
 import matplotlib.pyplot as plt
@@ -9,7 +9,7 @@ import pyvista
 import ufl
 
 
-class BidomainModel(BaseDynamicsModel):
+class BidomainModel(Common, BaseDynamicsModel):
     """A model that solves bidomain equations to simulate
     electric impulse conduction in heart."""
 
@@ -34,68 +34,17 @@ class BidomainModel(BaseDynamicsModel):
     SIGMA_ET = sigma_et / C_M / CHI  # cm^2/ms
     SIGMA_EN = sigma_en / C_M / CHI  # cm^2/ms
 
-    def __init__(self):
-        pass
-
-    def conductivity(
-        self,
-        longitudinal_fibres: list[float] | None = None,
-        transversal_fibres: list[float] | None = None,
-    ):
-        self.conductivity.__doc__
-
-        if longitudinal_fibres is not None and transversal_fibres is not None:
-            # Muscle sheets
-            self.sheet_l = ufl.as_vector(longitudinal_fibres)
-            self.sheet_n = ufl.as_vector(transversal_fibres)
-
-            # Healthy conductivities
-            self.M_i = (
-                self.SIGMA_IT * ufl.Identity(len(longitudinal_fibres))
-                + (self.SIGMA_IL - self.SIGMA_IT)
-                * ufl.outer(self.sheet_l, self.sheet_l)
-                + (self.SIGMA_IN - self.SIGMA_IT)
-                * ufl.outer(self.sheet_n, self.sheet_n)
-            )
-            self.M_e = (
-                self.SIGMA_ET * ufl.Identity(len(transversal_fibres))
-                + (self.SIGMA_EL - self.SIGMA_ET)
-                * ufl.outer(self.sheet_l, self.sheet_l)
-                + (self.SIGMA_EN - self.SIGMA_ET)
-                * ufl.outer(self.sheet_n, self.sheet_n)
-            )
-
-        else:
-            self.M_i = self.SIGMA_IT * ufl.Identity(self.d)
-            self.M_e = self.SIGMA_ET * ufl.Identity(self.d)
-
-    def setup(
-        self,
-        domain: mesh.Mesh,
-        longitudinal_fibres: list | None = None,
-        transversal_fibres: list | None = None,
-    ):
-        self.setup.__doc__
-
-        # Setting up meshes, function spaces and functions
-        self.element = ufl.FiniteElement("P", domain.ufl_cell(), degree=2)
-        self.W = fem.FunctionSpace(domain, ufl.MixedElement(self.element, self.element))
-        self.V1, self.sub1 = self.W.sub(0).collapse()
-        self.V2, self.sub2 = self.W.sub(1).collapse()
-
+    def __init__(self, domain):
+        super().__init__(domain)
         # Define test and trial functions
         self.psi, self.phi = ufl.TestFunctions(self.W)
         self.V_m, self.U_e = ufl.TrialFunctions(self.W)
 
         # Define fem functions, spatial coordinates and the dimension of a mesh
-        self.v_, self.w, self.V_m_n = (
+        self.v_, self.V_m_n = (
             fem.Function(self.W),
             fem.Function(self.V1),
-            fem.Function(self.V1),
         )
-
-        self.x = ufl.SpatialCoordinate(domain)
-        self.d = domain.topology.dim
 
         # Defining initial conditions for transmembrane potential
         cells = fem.locate_dofs_geometrical(self.V1, self.initial_V_m()[0])
@@ -182,9 +131,7 @@ class BidomainModel(BaseDynamicsModel):
                 )
 
             # 1st step of Strang splitting
-            self.V_m_n.x.array[:], self.w.x.array[:] = cell_model.step(
-                dt / 2, self.V_m_n.x.array, self.w.x.array
-            )
+            self.V_m_n.x.array[:] = cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
 
             # 2nd step of Strang splitting
             problem.solve()
@@ -196,9 +143,7 @@ class BidomainModel(BaseDynamicsModel):
             self.V_m_n.x.array[:] = self.v_.x.array[self.sub1]
 
             # 3rd step of Strang splitting
-            self.V_m_n.x.array[:], self.w.x.array[:] = cell_model.step(
-                dt / 2, self.V_m_n.x.array, self.w.x.array
-            )
+            self.V_m_n.x.array[:] = cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
 
             # Update plot
             plotter.clear()
@@ -216,6 +161,38 @@ class BidomainModel(BaseDynamicsModel):
             plotter.write_frame()
 
         plotter.close()
+
+    def conductivity(
+        self,
+        longitudinal_fibres: list[float] | None = None,
+        transversal_fibres: list[float] | None = None,
+    ):
+        self.conductivity.__doc__
+
+        if longitudinal_fibres is not None and transversal_fibres is not None:
+            # Muscle sheets
+            self.sheet_l = ufl.as_vector(longitudinal_fibres)
+            self.sheet_n = ufl.as_vector(transversal_fibres)
+
+            # Healthy conductivities
+            self.M_i = (
+                self.SIGMA_IT * ufl.Identity(len(longitudinal_fibres))
+                + (self.SIGMA_IL - self.SIGMA_IT)
+                * ufl.outer(self.sheet_l, self.sheet_l)
+                + (self.SIGMA_IN - self.SIGMA_IT)
+                * ufl.outer(self.sheet_n, self.sheet_n)
+            )
+            self.M_e = (
+                self.SIGMA_ET * ufl.Identity(len(transversal_fibres))
+                + (self.SIGMA_EL - self.SIGMA_ET)
+                * ufl.outer(self.sheet_l, self.sheet_l)
+                + (self.SIGMA_EN - self.SIGMA_ET)
+                * ufl.outer(self.sheet_n, self.sheet_n)
+            )
+
+        else:
+            self.M_i = self.SIGMA_IT * ufl.Identity(self.d)
+            self.M_e = self.SIGMA_ET * ufl.Identity(self.d)
 
     def plot_ischemia(self, *args):
         """A function that plots ischemia parts of the domain.\n
