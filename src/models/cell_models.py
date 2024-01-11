@@ -48,4 +48,5 @@ class Noble(BaseCellModel):
         pass
 
     def step(self, V: np.ndarray) -> np.ndarray:
+        I_app = 0.0
         return -1 / self.C_m * (self.g_Na * (V - self.v_Na) + (self.gk) * () + I_app)
