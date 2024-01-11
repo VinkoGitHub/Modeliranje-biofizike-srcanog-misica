@@ -11,13 +11,29 @@ class BaseCellModel(ABC):
         pass
 
     @abstractmethod
-    def f(V: np.ndarray, w: np.ndarray, *args) -> np.ndarray:
-        """dw/dt = f(V, w)"""
-        pass
+    def step(dt: float, V: np.ndarray, *args) -> list[np.ndarray]:
+        """
+        A function that computes a solution of the cell dynamics equations
+        for one timestep --> [``dV/dt = I_ion(V, w)``] and gating variables equations.
 
-    @abstractmethod
-    def I_ion(V: np.ndarray, w: np.ndarray, *args) -> np.ndarray:
-        """dV/dt = I_ion(V, w)"""
+        Parameters
+        ----------
+        ``dt``: float
+            Timestep in miliseconds.
+        ``V``: np.ndarray
+            Transmembrane potential array at a given moment.
+        ``*args``: optional
+            Gating variables arrays at a given moment.
+
+        Returns:
+        ----------
+        ``V_new``: ndarray
+            Transmembrane potential after solving the cell dynamics equations for one timestep.
+        ``g_new``: ndarray
+            Gating variable after solving the cell dynamics equations for one timestep.
+
+        ... same for another gating variables
+        """
         pass
 
     def visualize(self, T: float, V_0: float, w_0: float):
@@ -161,3 +177,11 @@ class BaseDynamicsModel(ABC):
         >>>     return (lambda x: x[0] < 0.5, 0.1, 0.05)
         """
         return None
+
+    def conductivity(self):
+        """This function is called during setup and it defines conductivities ``M_i`` and ``M_e``.\n
+        Deafult conductivities are predefined constants and if ``longitudinal_fibres``
+        and ``transversal_fibres`` are defined as parameters, conductivities become
+        tensor quantities. Also, whole method can be overloaded to define conductivities
+        differently."""
+        pass

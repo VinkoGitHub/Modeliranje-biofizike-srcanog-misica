@@ -2,7 +2,9 @@ from dolfinx import mesh, fem, geometry, io
 from dolfinx.plot import vtk_mesh
 import numpy as np
 import pyvista
+from typing import Callable
 from mpi4py import MPI
+import ufl
 
 
 # mesh.Mesh utilities
@@ -99,43 +101,41 @@ def plot_function(
     plotter.view_vector(camera_direction)
     plotter.show()
 
+
 def plot_vector_field(
-    domain: mesh.Mesh, vector_field: list = [0, 0, 0], tolerance: float = 0.05, factor: float = 0.3
+    domain: mesh.Mesh,
+    vector_field: Callable[[ufl.SpatialCoordinate], list],
+    tolerance: float = 0.05,
+    factor: float = 0.3,
 ):
     """A function that plots a vector field defined on a given domain.
-    In order to use this function and x, y and z coordinates,
-    you must define them before you call the function.\n
-    
-    They are defined as:
-    >>> x = domain.geometry.x[:, 0]
-    >>> y = domain.geometry.x[:, 1]
-    >>> z = domain.geometry.x[:, 2]
+    A vector field must be 3-dimensional.
 
     Parameters
     ----------
-    vector_field: list
-        Input a vector field, eg [0, 0, 1] or [y, -x, 0].
+    domain: mesh.Mesh
+        A mesh domain on which we plot the vector field.
+    vector_field: Callable
+        Input a function that intakes x and returns a vector field as a list.\n
+    Example:
+        >>> lambda x: [x[1], -x[0], 0]
     tolerance: float
         A paremeter which controls amount of plotted glyphs.
     factor: float
         A parameter which scales each of the glyphs by the given amount.
     """
+    vector_field_new = lambda x: [
+        val * (x[0] ** 2 + 1) / (x[0] ** 2 + 1) for val in vector_field(x)
+    ]
 
-    mesh = pyvista.UnstructuredGrid(*vtk_mesh(domain))
-    shape = domain.geometry.x.shape[0]
+    VS = fem.VectorFunctionSpace(domain, ("CG", 2), 3)
+    v = fem.Function(VS)
 
-    vectors = np.vstack(
-        (
-            np.zeros(shape) + vector_field[0],
-            np.zeros(shape) + vector_field[1],
-            np.zeros(shape) + vector_field[2],
-        )
-    ).T
+    v.interpolate(vector_field_new)
 
-    # add and scale
-    mesh["vectors"] = vectors
+    mesh = pyvista.UnstructuredGrid(*vtk_mesh(VS))
+    mesh["vectors"] = v.x.array.reshape((-1, 3))
     mesh.set_active_vectors("vectors")
-
     arrows = mesh.glyph(
         scale="vectors",
         orient="vectors",
@@ -150,3 +150,11 @@ def plot_vector_field(
         show_scalar_bar=False,
     )
     pl.show()
+
+
+# Other utilities
+def RK2_step(f: Callable, dt: float, v: np.ndarray) -> np.ndarray:
+    """Napisati dokumentaciju!"""
+    k1 = f(v)
+    k2 = f(v + dt * k1)
+    return v + dt / 2 * (k1 + k2)
