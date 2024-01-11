@@ -64,12 +64,13 @@ class BaseDynamicsModel(metaclass=ABCMeta):
         This function should return a tuple containing another function that
         takes ``x`` as an input and outputs a mathematical condition
         for an area in which initial ``V_m`` is different from the rest value
-        and the initial value for V_m in that area.
+        ,the initial value for V_m in that area and initial value for ``V_m`` in
+        the rest of the domain.
 
         Example:
 
         >>> def initial_V_m():
-        >>>     return (lambda x: x[0] < 0.5, 0.0)
+        >>>     return (lambda x: x[0] < 0.5, 0.0, -85.0)
         """
         raise NotImplementedError(
             "Method initial_V_m must be implemented for the model to work."

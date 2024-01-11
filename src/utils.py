@@ -153,8 +153,16 @@ def plot_vector_field(
 
 
 # Other utilities
-def RK2_step(f: Callable, dt: float, v: np.ndarray) -> np.ndarray:
+def RK2_step(f: Callable, dt: float, v: np.ndarray, *args) -> np.ndarray:
     """Napisati dokumentaciju!"""
-    k1 = f(v)
-    k2 = f(v + dt * k1)
+    k1 = f(v, *args)
+    k2 = f(v + dt * k1, *args)
     return v + dt / 2 * (k1 + k2)
+
+
+def RK3_step(f: Callable, dt: float, v: np.ndarray, *args) -> np.ndarray:
+    """Napisati dokumentaciju!"""
+    k1 = f(v, *args)
+    k2 = f(v + dt / 2 * k1, *args)
+    k3 = f(v - dt * k1 + 2 * dt * k2, *args)
+    return v + dt / 6 * (k1 + 4 * k2 + k3)

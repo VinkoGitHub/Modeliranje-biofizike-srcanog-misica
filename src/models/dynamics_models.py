@@ -48,7 +48,7 @@ class BidomainModel(Common, BaseDynamicsModel):
 
         # Defining initial conditions for transmembrane potential
         cells = fem.locate_dofs_geometrical(self.V1, self.initial_V_m()[0])
-        self.V_m_n.x.array[:] = self.V_REST
+        self.V_m_n.x.array[:] = self.initial_V_m()[2]
         self.V_m_n.x.array[cells] = np.full_like(cells, self.initial_V_m()[1])
 
         # Define conductivity tensors
@@ -107,7 +107,7 @@ class BidomainModel(Common, BaseDynamicsModel):
         # Making a plotting environment
         grid = pyvista.UnstructuredGrid(*plot.vtk_mesh(self.V1))
         plotter = pyvista.Plotter(notebook=True, off_screen=False)
-        plotter.open_gif("gifs/" + gif_name, fps=int(steps / 10))
+        plotter.open_gif("gifs/" + gif_name, loop=steps, fps=int(steps / 20))
         grid.point_data["V_m"] = self.V_m_n.x.array
         plotter.add_mesh(
             grid,
