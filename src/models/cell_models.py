@@ -184,17 +184,18 @@ class Noble(Common):
 
 class BeelerReuter(Common):
     C_m = 1.0
+    I_app = 0.0
 
     def __init__(
         self,
         domain: mesh.Mesh,
-        c_0: float = 0.5,
-        m_0: float = 0.5,
-        h_0: float = 0.5,
-        j_0: float = 0.5,
-        d_0: float = 0.5,
-        f_0: float = 0.5,
-        x_0: float = 0.5,
+        c_0: float = 1,
+        m_0: float = 0.011,
+        h_0: float = 0.99,
+        j_0: float = 0.97,
+        d_0: float = 0.003,
+        f_0: float = 1,
+        x_0: float = 0.0074,
     ):
         super().__init__(domain)
         self.c = fem.Function(self.V1)
@@ -209,8 +210,8 @@ class BeelerReuter(Common):
         self.d.x.array[:] = d_0
         self.f = fem.Function(self.V1)
         self.f.x.array[:] = f_0
-        self.x = fem.Function(self.V1)
-        self.x.x.array[:] = x_0
+        self.x1 = fem.Function(self.V1)
+        self.x1.x.array[:] = x_0
 
     def step_V_m(self, dt: float, V: np.ndarray) -> np.ndarray:
         c = self.c.x.array
@@ -219,21 +220,21 @@ class BeelerReuter(Common):
         j = self.j.x.array
         d = self.d.x.array
         f = self.f.x.array
-        x = self.x.x.array
+        x1 = self.x1.x.array
 
-        I_Na = (4 * m**3 * h * j + 0.003) * (V - 50)
-        I_K = (
-            1.4
+        I_K1 = 0.35 * (
+            4
             * (np.exp(0.04 * (V + 85)) - 1)
             / (np.exp(0.08 * (V + 53)) + np.exp(0.04 * (V + 53)))
+            + 0.2 * (V + 23) / (1 - np.exp(-0.04 * (V + 23)))
         )
-        I_x = 0.8 * x * (np.exp(0.04 * (V + 77)) - 1) / np.exp(0.04 * (V + 35))
-        I_s = 0.09 * f * d * (V + 66.18 + 13.0287 * (np.log(c) - 7 * np.log(10)))
-        I_app = 0.0
+        I_x1 = 0.8 * x1 * (np.exp(0.04 * (V + 77)) - 1) / np.exp(0.04 * (V + 35))
+        I_Na = (4 * m**3 * h * j + 0.003) * (V - 50)
+        I_Ca = 0.09 * d * f * (V - 127.698 + 13.0287 * np.log(c))
 
-        dVdt = lambda V: (-1 / self.C_m * (I_Na + I_K + I_x + I_s + I_app))
+        dVdt = lambda V: -1 / self.C_m * (I_K1 + I_x1 + I_Na + I_Ca - self.I_app)
 
-        dcdt = lambda c: 0.07 * (1 - c) - I_s
+        dcdt = lambda c: 0.07 * (1 - c) - I_Ca
 
         def blueprint(C1, C2, C3, C4, C5, v0):
             return (C1 * np.exp(C2 * (V - v0)) + C3 * (V - v0)) / (
@@ -242,10 +243,10 @@ class BeelerReuter(Common):
 
         dmdt = lambda m: (
             blueprint(0.0, 0.0, 1.0, -1.0, -0.1, -47.0) * (1 - m)
-            - blueprint(40.0, -0.5599, 0.0, 0.0, 0.0, -72.0) * m
+            - blueprint(40.0, -0.056, 0.0, 0.0, 0.0, -72.0) * m
         )
         dhdt = lambda h: (
-            blueprint(0.126, -0.25, 0.0, 0.0, 0.0, -72.0) * (1 - h)
+            blueprint(0.126, -0.25, 0.0, 0.0, 0.0, -77.0) * (1 - h)
             - blueprint(1.7, 0.0, 0.0, 1.0, -0.082, -22.5) * h
         )
         djdt = lambda j: (
@@ -253,16 +254,16 @@ class BeelerReuter(Common):
             - blueprint(0.3, 0.0, 0.0, 1.0, -0.1, -32.0) * j
         )
         dddt = lambda d: (
-            blueprint(0.095, -0.01, 0.0, 1.0, -0.0719, 5.0) * (1 - d)
-            - blueprint(0.07, -0.0171, 0.0, 1.0, 0.05, -44.0) * d
+            blueprint(0.095, -0.01, 0.0, 1.0, -0.072, 5.0) * (1 - d)
+            - blueprint(0.07, -0.017, 0.0, 1.0, 0.05, -44.0) * d
         )
         dfdt = lambda f: (
-            blueprint(0.012, -125.0, 0.0, 1.0, 0.15, -28.0) * (1 - f)
-            - blueprint(0.0065, -0.02, 0.0, 1.0, -5.0, -30.0) * f
+            blueprint(0.012, -0.008, 0.0, 1.0, 0.15, -28.0) * (1 - f)
+            - blueprint(0.0065, -0.02, 0.0, 1.0, -0.2, -30.0) * f
         )
-        dxdt = lambda x: (
-            blueprint(0.0005, -0.0833, 0.0, 1.0, 0.0571, -50.0) * (1 - x)
-            - blueprint(0.0013, -0.06, 0.0, 1.0, 0.04, -20.0) * x
+        dx1dt = lambda x1: (
+            blueprint(0.0005, 0.083, 0.0, 1.0, 0.057, -50.0) * (1 - x1)
+            - blueprint(0.0013, -0.06, 0.0, 1.0, -0.04, -20.0) * x1
         )
 
         self.m.x.array[:] = RK4_step(dmdt, dt, m)
@@ -270,22 +271,22 @@ class BeelerReuter(Common):
         self.j.x.array[:] = RK4_step(djdt, dt, j)
         self.d.x.array[:] = RK4_step(dddt, dt, d)
         self.f.x.array[:] = RK4_step(dfdt, dt, f)
-        self.x.x.array[:] = RK4_step(dxdt, dt, x)
+        self.x1.x.array[:] = RK4_step(dx1dt, dt, x1)
         self.c.x.array[:] = RK4_step(dcdt, dt, c)
 
         return RK4_step(dVdt, dt, V)
 
-    def visualize(
+    def visualize_not_working(
         self,
         T: float,
         V_0: float,
-        c_0: float = 0.0,
-        m_0: float = 0.0,
-        h_0: float = 0.0,
-        j_0: float = 0.0,
-        d_0: float = 0.0,
-        f_0: float = 0.0,
-        x_0: float = 0.0,
+        c_0: float = 1,
+        m_0: float = 0.5,
+        h_0: float = 0.5,
+        j_0: float = 0.5,
+        d_0: float = 0.5,
+        f_0: float = 0.5,
+        x_0: float = 0.5,
     ):
         def fun(t, z):
             V, c, m, h, j, d, f, x = z
@@ -297,10 +298,9 @@ class BeelerReuter(Common):
                 / (np.exp(0.08 * (V + 53)) + np.exp(0.04 * (V + 53)))
             )
             I_x = 0.8 * x * (np.exp(0.04 * (V + 77)) - 1) / np.exp(0.04 * (V + 35))
-            I_s = 0.09 * f * d * (V + 66.18 + 13.0287 * (np.log(c) - 7 * np.log(10)))
-            I_app = 0.0
+            I_s = 0.09 * f * d * (V + 82.3 + 13.0287 * (np.log(c) - 7 * np.log(10)))
 
-            dVdt = -1 / self.C_m * (I_Na + I_K + I_x + I_s + I_app)
+            dVdt = -1 / self.C_m * (I_Na + I_K + I_x + I_s + self.I_app)
 
             dcdt = 0.07 * (1 - c) - I_s
 
@@ -311,10 +311,10 @@ class BeelerReuter(Common):
 
             dmdt = (
                 blueprint(0.0, 0.0, 1.0, -1.0, -0.1, -47.0) * (1 - m)
-                - blueprint(40.0, -0.5599, 0.0, 0.0, 0.0, -72.0) * m
+                - blueprint(40.0, -0.056, 0.0, 0.0, 0.0, -72.0) * m
             )
             dhdt = (
-                blueprint(0.126, -0.25, 0.0, 0.0, 0.0, -72.0) * (1 - h)
+                blueprint(0.126, -0.25, 0.0, 0.0, 0.0, -77.0) * (1 - h)
                 - blueprint(1.7, 0.0, 0.0, 1.0, -0.082, -22.5) * h
             )
             djdt = (
@@ -322,16 +322,16 @@ class BeelerReuter(Common):
                 - blueprint(0.3, 0.0, 0.0, 1.0, -0.1, -32.0) * j
             )
             dddt = (
-                blueprint(0.095, -0.01, 0.0, 1.0, -0.0719, 5.0) * (1 - d)
-                - blueprint(0.07, -0.0171, 0.0, 1.0, 0.05, -44.0) * d
+                blueprint(0.095, -0.01, 0.0, 1.0, -0.072, 5.0) * (1 - d)
+                - blueprint(0.07, -0.017, 0.0, 1.0, 0.05, -44.0) * d
             )
             dfdt = (
-                blueprint(0.012, -125.0, 0.0, 1.0, 0.15, -28.0) * (1 - f)
-                - blueprint(0.0065, -0.02, 0.0, 1.0, -5.0, -30.0) * f
+                blueprint(0.012, -0.008, 0.0, 1.0, 0.15, -28.0) * (1 - f)
+                - blueprint(0.0065, -0.02, 0.0, 1.0, -0.2, -30.0) * f
             )
             dxdt = (
-                blueprint(0.0005, -0.0833, 0.0, 1.0, 0.0571, -50.0) * (1 - x)
-                - blueprint(0.0013, -0.06, 0.0, 1.0, 0.04, -20.0) * x
+                blueprint(0.0005, 0.083, 0.0, 1.0, 0.057, -50.0) * (1 - x)
+                - blueprint(0.0013, -0.06, 0.0, 1.0, -0.04, -20.0) * x
             )
             return [dVdt, dcdt, dmdt, dhdt, djdt, dddt, dfdt, dxdt]
 
@@ -349,3 +349,119 @@ class BeelerReuter(Common):
         plt.ylabel("$V_m$")
         plt.title("Action potential")
         plt.show()
+
+        print(
+            "U T=",
+            T / 2,
+            "je V=",
+            sol.y[0][500],
+            "c=",
+            sol.y[1][500],
+            "m=",
+            sol.y[2][500],
+            "h=",
+            sol.y[3][500],
+            "j=",
+            sol.y[4][500],
+            "d=",
+            sol.y[5][500],
+            "f=",
+            sol.y[6][500],
+            "x=",
+            sol.y[7][500],
+        )
+
+    def visualize(
+        self,
+        T: float,
+        V_0: float,
+        c_0: float = 1,
+        m_0: float = 0.011,
+        h_0: float = 0.99,
+        j_0: float = 0.97,
+        d_0: float = 0.003,
+        f_0: float = 1,
+        x_0: float = 0.0074,
+    ):
+        def fun(t, z):
+            V, c, m, h, j, d, f, x1 = z
+
+            I_K1 = 0.35 * (
+                4
+                * (np.exp(0.04 * (V + 85)) - 1)
+                / (np.exp(0.08 * (V + 53)) + np.exp(0.04 * (V + 53)))
+                + 0.2 * (V + 23) / (1 - np.exp(-0.04 * (V + 23)))
+            )
+            I_x1 = 0.8 * x1 * (np.exp(0.04 * (V + 77)) - 1) / np.exp(0.04 * (V + 35))
+            I_Na = (4 * m**3 * h * j + 0.003) * (V - 50)
+            I_Ca = 0.09 * d * f * (V - 127.698 + 13.0287 * np.log(c))
+
+            dVdt = -1 / self.C_m * (I_K1 + I_x1 + I_Na + I_Ca - self.I_app)
+
+            dcdt = 0.07 * (1 - c) - I_Ca
+
+            def blueprint(C1, C2, C3, C4, C5, v0):
+                return (C1 * np.exp(C2 * (V - v0)) + C3 * (V - v0)) / (
+                    1 + C4 * np.exp(C5 * (V - v0))
+                )
+
+            dmdt = (
+                blueprint(0.0, 0.0, 1.0, -1.0, -0.1, -47.0) * (1 - m)
+                - blueprint(40.0, -0.056, 0.0, 0.0, 0.0, -72.0) * m
+            )
+            dhdt = (
+                blueprint(0.126, -0.25, 0.0, 0.0, 0.0, -77.0) * (1 - h)
+                - blueprint(1.7, 0.0, 0.0, 1.0, -0.082, -22.5) * h
+            )
+            djdt = (
+                blueprint(0.055, -0.25, 0.0, 1.0, -0.2, -78.0) * (1 - j)
+                - blueprint(0.3, 0.0, 0.0, 1.0, -0.1, -32.0) * j
+            )
+            dddt = (
+                blueprint(0.095, -0.01, 0.0, 1.0, -0.072, 5.0) * (1 - d)
+                - blueprint(0.07, -0.017, 0.0, 1.0, 0.05, -44.0) * d
+            )
+            dfdt = (
+                blueprint(0.012, -0.008, 0.0, 1.0, 0.15, -28.0) * (1 - f)
+                - blueprint(0.0065, -0.02, 0.0, 1.0, -0.2, -30.0) * f
+            )
+            dxdt = (
+                blueprint(0.0005, 0.083, 0.0, 1.0, 0.057, -50.0) * (1 - x1)
+                - blueprint(0.0013, -0.06, 0.0, 1.0, -0.04, -20.0) * x1
+            )
+            return [dVdt, dcdt, dmdt, dhdt, djdt, dddt, dfdt, dxdt]
+
+        time = np.linspace(0, T, 3000)
+        sol = solve_ivp(
+            fun,
+            [0, T],
+            [V_0, c_0, m_0, h_0, j_0, d_0, f_0, x_0],
+            # method="DOP853",
+            t_eval=time,
+        )
+
+        plt.plot(sol.t, sol.y[0])
+        plt.xlabel("$t$")
+        plt.ylabel("$V_m$")
+        plt.title("Action potential")
+        plt.show()
+
+        print(
+            "U trenutku T:",
+            "V=",
+            sol.y[0][-1],
+            "c=",
+            sol.y[1][-1],
+            "m=",
+            sol.y[2][-1],
+            "h=",
+            sol.y[3][-1],
+            "j=",
+            sol.y[4][-1],
+            "d=",
+            sol.y[5][-1],
+            "f=",
+            sol.y[6][-1],
+            "x=",
+            sol.y[7][-1],
+        )
