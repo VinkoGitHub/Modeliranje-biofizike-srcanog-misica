@@ -1,7 +1,7 @@
-from src.models.base_models import *
 from dolfinx.fem.petsc import LinearProblem
-from dolfinx import fem, mesh, plot
+from src.models.base_models import *
 import matplotlib.pyplot as plt
+from dolfinx import fem, plot, mesh
 import src.utils as utils
 from tqdm import tqdm
 import numpy as np
@@ -14,8 +14,7 @@ class BidomainModel(Common, BaseDynamicsModel):
     electric impulse conduction in heart."""
 
     # model parameters
-    CHI = 2000  # cm^-1
-    C_M = 1  # ms*mS/cm^2
+    chi = 2000  # cm^-1
     V_REST = -85.0  # mV
     V_PEAK = 40.0  # mV
 
@@ -27,15 +26,10 @@ class BidomainModel(Common, BaseDynamicsModel):
     sigma_et = 1.65  # mS/cm
     sigma_en = 1.3514  # mS/cm
 
-    SIGMA_IL = sigma_il / C_M / CHI  # cm^2/ms
-    SIGMA_IT = sigma_it / C_M / CHI  # cm^2/ms
-    SIGMA_IN = sigma_in / C_M / CHI  # cm^2/ms
-    SIGMA_EL = sigma_el / C_M / CHI  # cm^2/ms
-    SIGMA_ET = sigma_et / C_M / CHI  # cm^2/ms
-    SIGMA_EN = sigma_en / C_M / CHI  # cm^2/ms
-
-    def __init__(self, domain):
+    def __init__(self, domain: mesh.Mesh, cell_model: BaseCellModel):
         super().__init__(domain)
+        self.cell_model = cell_model
+        
         # Define test and trial functions
         self.psi, self.phi = ufl.TestFunctions(self.W)
         self.V_m, self.U_e = ufl.TrialFunctions(self.W)
@@ -50,6 +44,14 @@ class BidomainModel(Common, BaseDynamicsModel):
         cells = fem.locate_dofs_geometrical(self.V1, self.initial_V_m()[0])
         self.V_m_n.x.array[:] = self.initial_V_m()[2]
         self.V_m_n.x.array[cells] = np.full_like(cells, self.initial_V_m()[1])
+
+        # Define conductivity values with respect to the cell model
+        self.SIGMA_IL = self.sigma_il / cell_model.C_m / self.chi  # cm^2/ms
+        self.SIGMA_IT = self.sigma_it / cell_model.C_m / self.chi  # cm^2/ms
+        self.SIGMA_IN = self.sigma_in / cell_model.C_m / self.chi  # cm^2/ms
+        self.SIGMA_EL = self.sigma_el / cell_model.C_m / self.chi  # cm^2/ms
+        self.SIGMA_ET = self.sigma_et / cell_model.C_m / self.chi  # cm^2/ms
+        self.SIGMA_EN = self.sigma_en / cell_model.C_m / self.chi  # cm^2/ms
 
         # Define conductivity tensors
         self.conductivity()
@@ -72,7 +74,6 @@ class BidomainModel(Common, BaseDynamicsModel):
         self,
         T: float,
         steps: int,
-        cell_model: BaseCellModel,
         signal_point: list[float] | None = None,
         camera: list[float] | None = None,
         gif_name: str = "V_m.gif",
@@ -107,7 +108,7 @@ class BidomainModel(Common, BaseDynamicsModel):
         # Making a plotting environment
         grid = pyvista.UnstructuredGrid(*plot.vtk_mesh(self.V1))
         plotter = pyvista.Plotter(notebook=True, off_screen=False)
-        plotter.open_gif("gifs/" + gif_name, loop=steps, fps=int(steps / 20))
+        plotter.open_gif("gifs/" + gif_name, loop=steps, fps=int(steps / 10))
         grid.point_data["V_m"] = self.V_m_n.x.array
         plotter.add_mesh(
             grid,
@@ -131,7 +132,7 @@ class BidomainModel(Common, BaseDynamicsModel):
                 )
 
             # 1st step of Strang splitting
-            self.V_m_n.x.array[:] = cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
+            self.V_m_n.x.array[:] = self.cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
 
             # 2nd step of Strang splitting
             problem.solve()
@@ -143,7 +144,7 @@ class BidomainModel(Common, BaseDynamicsModel):
             self.V_m_n.x.array[:] = self.v_.x.array[self.sub1]
 
             # 3rd step of Strang splitting
-            self.V_m_n.x.array[:] = cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
+            self.V_m_n.x.array[:] = self.cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
 
             # Update plot
             plotter.clear()
