@@ -31,7 +31,9 @@ def plot_mesh(
     domain: mesh.Mesh,
     mesh_name: str = "Mesh",
     camera_direction: list[float] = [1, 1, 1],
+    zoom: float = 1.0,
     shadow: bool = False,
+    save_to: str | None = None,
 ):
     """Plot a dolfinx Mesh."""
     # Create a pyvista mesh and attach the values of u
@@ -42,6 +44,9 @@ def plot_mesh(
     plotter.add_text(f"{mesh_name}", position="upper_edge", font_size=14, color="black")
     plotter.add_mesh(grid, show_edges=True, lighting=shadow)
     plotter.view_vector(camera_direction)
+    plotter.camera.zoom(zoom)
+    if save_to is not None:
+        plotter.save_graphic(save_to)
     plotter.show()
 
 
@@ -83,8 +88,10 @@ def plot_function(
     function: fem.Function,
     function_name: str = "function",
     camera_direction: list[float] = [1, 1, 1],
+    zoom: float = 1.0,
     shadow: bool = False,
     show_mesh: bool = True,
+    save_to: str | None = None,
 ):
     """Plot a dolfinx fem Function."""
     # Create a pyvista mesh and attach the values of u
@@ -99,6 +106,9 @@ def plot_function(
     )
     plotter.add_mesh(grid, show_edges=show_mesh, lighting=shadow)
     plotter.view_vector(camera_direction)
+    plotter.camera.zoom(zoom)
+    if save_to is not None:
+        plotter.save_graphic(save_to)
     plotter.show()
 
 
@@ -107,6 +117,9 @@ def plot_vector_field(
     vector_field: Callable[[ufl.SpatialCoordinate], list],
     tolerance: float = 0.05,
     factor: float = 0.3,
+    camera_direction: list[float] = [1, 1, 1],
+    zoom: float = 1.0,
+    save_to: str | None = None,
 ):
     """A function that plots a vector field defined on a given domain.
     A vector field must be 3-dimensional.
@@ -142,14 +155,18 @@ def plot_vector_field(
         tolerance=tolerance,
         factor=factor,
     )
-    pl = pyvista.Plotter()
-    pl.add_mesh(arrows, color="black")
-    pl.add_mesh(
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(arrows, color="black")
+    plotter.add_mesh(
         mesh,
         color="firebrick",
         show_scalar_bar=False,
     )
-    pl.show()
+    plotter.view_vector(camera_direction)
+    plotter.camera.zoom(zoom)
+    if save_to is not None:
+        plotter.save_graphic(save_to)  
+    plotter.show()
 
 
 # Other utilities
