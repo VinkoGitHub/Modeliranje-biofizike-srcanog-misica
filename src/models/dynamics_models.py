@@ -115,10 +115,10 @@ class BidomainModel(Common, BaseDynamicsModel):
         else:
             fps = 60
             sparser = int(steps / 900)
-            
-        if save_to[-4:] == '.gif' :
+
+        if save_to[-4:] == ".gif":
             plotter.open_gif("animations/" + save_to, loop=steps, fps=fps)
-        elif save_to[-4:] == '.mp4':
+        elif save_to[-4:] == ".mp4":
             plotter.open_movie("animations/" + save_to, framerate=fps)
 
         grid.point_data["V_m"] = self.V_m_n.x.array
@@ -211,7 +211,14 @@ class BidomainModel(Common, BaseDynamicsModel):
             self.M_i = self.SIGMA_IT * ufl.Identity(self.d)
             self.M_e = self.SIGMA_ET * ufl.Identity(self.d)
 
-    def plot_ischemia(self, *args):
+    def plot_ischemia(
+        self,
+        camera_direction: list[float] = [1, 1, 1],
+        zoom: float = 1.0,
+        shadow: bool = False,
+        show_mesh: bool = True,
+        save_to: str | None = None,
+    ):
         """A function that plots ischemia parts of the domain.\n
         Plotting parameters can be passed."""
 
@@ -224,12 +231,29 @@ class BidomainModel(Common, BaseDynamicsModel):
         fun.x.array[:] = 0
         fun.x.array[cells] = np.full_like(cells, 1)
 
-        utils.plot_function(fun, "ischemia", *args)
+        utils.plot_function(
+            fun, "ischemia", camera_direction, zoom, shadow, show_mesh, save_to
+        )
 
-    def plot_initial_V_m(self, *args):
+    def plot_initial_V_m(
+        self,
+        camera_direction: list[float] = [1, 1, 1],
+        zoom: float = 1.0,
+        shadow: bool = False,
+        show_mesh: bool = True,
+        save_to: str | None = None,
+    ):
         """A function that plots initial transmembrane potential.\n
         Plotting parameters can be passed."""
-        utils.plot_function(self.V_m_n, "initial V_m", *args)
+        utils.plot_function(
+            self.V_m_n,
+            "initial V_m",
+            camera_direction,
+            zoom,
+            shadow,
+            show_mesh,
+            save_to,
+        )
 
     def plot_signal(self, *args):
         """A function that plots transmembrane potential at a point

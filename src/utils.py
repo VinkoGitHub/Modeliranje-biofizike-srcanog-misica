@@ -1,27 +1,140 @@
 from dolfinx import mesh, fem, geometry, io
 from dolfinx.plot import vtk_mesh
-import numpy as np
-import pyvista
+from dolfinx.io import gmshio
 from typing import Callable
 from mpi4py import MPI
+import numpy as np
+import pyvista
+import gmsh
 import ufl
 
 
 # mesh.Mesh utilities
-def create_square(Nx: int, Ny: int):
+def heart_slice(coarseness: float = 1e-1) -> mesh.Mesh:
+    # Initialize gmsh:
+    gmsh.initialize()
+    model = gmsh.model()
+    # Define points:
+    lc = coarseness
+    point1 = model.geo.add_point(1, 4.4, 0, lc)
+    point2 = model.geo.add_point(2.1, 4.6, 0, lc)
+    point3 = model.geo.add_point(3.3, 4.3, 0, lc)
+    point4 = model.geo.add_point(4.2, 3.6, 0, lc)
+    point5 = model.geo.add_point(4.9, 2.4, 0, lc)
+    point6 = model.geo.add_point(4.9, 0.7, 0, lc)
+    point7 = model.geo.add_point(4.3, -0.5, 0, lc)
+    point8 = model.geo.add_point(3.3, -1, 0, lc)
+    point9 = model.geo.add_point(1.8, -1.6, 0, lc)
+    point10 = model.geo.add_point(-0.2, -1.8, 0, lc)
+    point11 = model.geo.add_point(-1.8, -1.4, 0, lc)
+    point12 = model.geo.add_point(-2.9, -0.5, 0, lc)
+    point13 = model.geo.add_point(-3.2, 1, 0, lc)
+    point14 = model.geo.add_point(-2.7, 2.5, 0, lc)
+    point15 = model.geo.add_point(-1.8, 3.3, 0, lc)
+    point16 = model.geo.add_point(-0.7, 4.1, 0, lc)
+    point17 = model.geo.add_point(-0.3, 2.5, 0, lc)
+    point18 = model.geo.add_point(-1, 1.9, 0, lc)
+    point19 = model.geo.add_point(-1.4, 0.9, 0, lc)
+    point20 = model.geo.add_point(-1, -0.2, 0, lc)
+    point21 = model.geo.add_point(0.3, -0.3, 0, lc)
+    point22 = model.geo.add_point(1.4, 0.3, 0, lc)
+    point23 = model.geo.add_point(1.6, 1.1, 0, lc)
+    point24 = model.geo.add_point(1.5, 2, 0, lc)
+    point25 = model.geo.add_point(0.5, 2.6, 0, lc)
+    point26 = model.geo.add_point(2.7, 2.9, 0, lc)
+    point27 = model.geo.add_point(2.7, 1.9, 0, lc)
+    point28 = model.geo.add_point(2.6, 0.9, 0, lc)
+    point29 = model.geo.add_point(2.3, 0.1, 0, lc)
+    point30 = model.geo.add_point(3.4, 0.2, 0, lc)
+    point31 = model.geo.add_point(3.9, 1, 0, lc)
+    point32 = model.geo.add_point(3.9, 1.9, 0, lc)
+    point33 = model.geo.add_point(3.7, 2.5, 0, lc)
+    # Define curves:
+    spline1 = model.geo.add_spline(
+        [
+            point1,
+            point2,
+            point3,
+            point4,
+            point5,
+            point6,
+            point7,
+            point8,
+            point9,
+            point10,
+            point11,
+            point12,
+            point13,
+            point14,
+            point15,
+            point16,
+            point1,
+        ]
+    )
+    spline2 = model.geo.add_spline(
+        [
+            point17,
+            point18,
+            point19,
+            point20,
+            point21,
+            point22,
+            point23,
+            point24,
+            point25,
+            point17,
+        ]
+    )
+    spline3 = model.geo.add_spline(
+        [
+            point26,
+            point27,
+            point28,
+            point29,
+            point30,
+            point31,
+            point32,
+            point33,
+            point26,
+        ]
+    )
+    # Define loops:
+    loop1 = model.geo.add_curve_loop([spline1])
+    loop2 = model.geo.add_curve_loop([spline2])
+    loop3 = model.geo.add_curve_loop([spline3])
+    # Define surface:
+    surface = model.geo.add_plane_surface([loop1, loop2, loop3])
+    gmsh.model.addPhysicalGroup(2, [surface], 1)
+    # Create the relevant data structures from Gmsh model
+    model.geo.synchronize()
+    # Generate mesh:
+    model.mesh.generate()
+    # Creates graphical user interface
+    # if "close" not in sys.argv: # this should be included to
+    #    gmsh.fltk.run()         # visualize mesh in gmsh GUI
+    # Convert to Dolfinx mesh format
+    domain, cell_markers, facet_markers = gmshio.model_to_mesh(
+        gmsh.model, MPI.COMM_WORLD, 0, 2
+    )
+    # It finalize the Gmsh API
+    gmsh.finalize()
+    return domain
+
+
+def create_square(Nx: int, Ny: int) -> mesh.Mesh:
     """Create a unit square mesh which contains Nx points
     in x-direction and Ny points in y-direction."""
     return mesh.create_unit_square(MPI.COMM_WORLD, Nx, Ny)
 
 
-def create_cube(Nx: int, Ny: int, Nz: int):
+def create_cube(Nx: int, Ny: int, Nz: int) -> mesh.Mesh:
     """Create a unit box mesh which contains Nx points
     in x-direction, Ny points in y-direction and Nz points in
     z-direction."""
     return mesh.create_unit_cube(MPI.COMM_WORLD, Nx, Ny, Nz)
 
 
-def import_mesh(filename: str):
+def import_mesh_(filename: str):
     """Import mesh from an .xdmf file."""
     with io.XDMFFile(MPI.COMM_WORLD, filename, "r") as xdmf:
         return xdmf.read_mesh(name="Grid")
@@ -165,7 +278,7 @@ def plot_vector_field(
     plotter.view_vector(camera_direction)
     plotter.camera.zoom(zoom)
     if save_to is not None:
-        plotter.save_graphic(save_to)  
+        plotter.save_graphic(save_to)
     plotter.show()
 
 
