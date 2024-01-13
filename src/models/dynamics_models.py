@@ -29,7 +29,7 @@ class BidomainModel(Common, BaseDynamicsModel):
     def __init__(self, domain: mesh.Mesh, cell_model: BaseCellModel):
         super().__init__(domain)
         self.cell_model = cell_model
-        
+
         # Define test and trial functions
         self.psi, self.phi = ufl.TestFunctions(self.W)
         self.V_m, self.U_e = ufl.TrialFunctions(self.W)
@@ -76,7 +76,7 @@ class BidomainModel(Common, BaseDynamicsModel):
         steps: int,
         signal_point: list[float] | None = None,
         camera: list[float] | None = None,
-        gif_name: str = "V_m.gif",
+        save_to: str = "V_m.gif",
     ):
         self.solve.__doc__
 
@@ -108,7 +108,19 @@ class BidomainModel(Common, BaseDynamicsModel):
         # Making a plotting environment
         grid = pyvista.UnstructuredGrid(*plot.vtk_mesh(self.V1))
         plotter = pyvista.Plotter(notebook=True, off_screen=False)
-        plotter.open_gif("gifs/" + gif_name, loop=steps, fps=int(steps / 10))
+
+        if steps < 600:
+            fps = int(steps / 10)
+            sparser = 1
+        else:
+            fps = 60
+            sparser = int(steps / 900)
+            
+        if save_to[-4:] == '.gif' :
+            plotter.open_gif("animations/" + save_to, loop=steps, fps=fps)
+        elif save_to[-4:] == '.mp4':
+            plotter.open_movie("animations/" + save_to, framerate=fps)
+
         grid.point_data["V_m"] = self.V_m_n.x.array
         plotter.add_mesh(
             grid,
@@ -123,6 +135,7 @@ class BidomainModel(Common, BaseDynamicsModel):
         self.signal = []
         self.time = np.linspace(0, T, steps)
 
+        iteration_number = 0
         # Iterate through time
         for t in tqdm(self.time, desc="Solving problem"):
             # Appending the transmembrane potential value at some point to a list
@@ -146,20 +159,23 @@ class BidomainModel(Common, BaseDynamicsModel):
             # 3rd step of Strang splitting
             self.V_m_n.x.array[:] = self.cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
 
-            # Update plot
-            plotter.clear()
-            grid.point_data["V_m"] = self.V_m_n.x.array[:]
-            plotter.add_mesh(
-                grid,
-                show_edges=False,
-                lighting=True,
-                smooth_shading=True,
-                clim=[-100, 50],
-            )
-            plotter.add_title("t = %.3f" % t, font_size=24)
-            if camera != None:
-                plotter.view_vector([1, -1, -1])
-            plotter.write_frame()
+            if iteration_number % sparser == 0:
+                # Update plot
+                plotter.clear()
+                grid.point_data["V_m"] = self.V_m_n.x.array[:]
+                plotter.add_mesh(
+                    grid,
+                    show_edges=False,
+                    lighting=True,
+                    smooth_shading=True,
+                    clim=[-100, 50],
+                )
+                plotter.add_title("t = %.3f" % t, font_size=24)
+                if camera != None:
+                    plotter.view_vector([1, -1, -1])
+                plotter.write_frame()
+
+            iteration_number += 1
 
         plotter.close()
 
