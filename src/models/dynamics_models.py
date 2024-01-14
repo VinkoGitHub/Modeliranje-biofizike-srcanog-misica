@@ -41,9 +41,7 @@ class BidomainModel(Common, BaseDynamicsModel):
         )
 
         # Defining initial conditions for transmembrane potential
-        cells = fem.locate_dofs_geometrical(self.V1, self.initial_V_m()[0])
-        self.V_m_n.x.array[:] = self.initial_V_m()[2]
-        self.V_m_n.x.array[cells] = np.full_like(cells, self.initial_V_m()[1])
+        self.initial_V_m()
 
         # Define conductivity values with respect to the cell model
         self.SIGMA_IL = self.sigma_il / cell_model.C_m / self.chi  # cm^2/ms

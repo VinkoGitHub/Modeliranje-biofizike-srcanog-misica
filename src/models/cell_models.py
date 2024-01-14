@@ -73,7 +73,7 @@ class Noble(Common):
     I_app = 0.0
 
     def __init__(
-        self, domain: mesh.Mesh, m_0: float = 0.0, h_0: float = 0.0, n_0: float = 0.0
+        self, domain: mesh.Mesh, m_0: float = 0.0, h_0: float = 0.9, n_0: float = 0.6
     ):
         super().__init__(domain)
         self.m = fem.Function(self.V1)
@@ -127,7 +127,7 @@ class Noble(Common):
         return RK2_step(dVdt, dt, V)
 
     def visualize(
-        self, T: float, V_0: float, m_0: float = 0.0, h_0: float = 0.0, n_0: float = 0.0
+        self, T: float, V_0: float, m_0: float = 0.0, h_0: float = 0.9, n_0: float = 0.6
     ):
         def fun(t, z):
             V, m, h, n = z
@@ -165,7 +165,7 @@ class Noble(Common):
             )
             return [dVdt, dmdt, dhdt, dndt]
 
-        time = np.linspace(0, T, 500)
+        time = np.linspace(0, T, 1000)
         sol = solve_ivp(fun, [0, T], [V_0, m_0, h_0, n_0], method="DOP853", t_eval=time)
 
         plt.plot(sol.t, sol.y[0])
@@ -174,11 +174,13 @@ class Noble(Common):
         plt.title("Action potential")
         plt.show()
         print(
-            "U trenutku t=1600 V, m, h i n su:",
-            sol.y[0][400],
-            sol.y[1][400],
-            sol.y[2][400],
-            sol.y[3][400],
+            "U trenutku t=",
+            T,
+            " -- V, m, h i n iznose:",
+            sol.y[0][-1],
+            sol.y[1][-1],
+            sol.y[2][-1],
+            sol.y[3][-1],
         )
 
 

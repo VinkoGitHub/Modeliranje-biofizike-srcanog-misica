@@ -61,16 +61,19 @@ class BaseDynamicsModel(metaclass=ABCMeta):
     @abstractmethod
     def initial_V_m(self):
         """A function used to define initial transmembrane potential.
-        This function should return a tuple containing another function that
-        takes ``x`` as an input and outputs a mathematical condition
-        for an area in which initial ``V_m`` is different from the rest value
-        ,the initial value for V_m in that area and initial value for ``V_m`` in
-        the rest of the domain.
+        This function should impose an initial condition on the function
+        V_m. The value of V_m can be checked by plotting the function
+        with ``plot_function`` function from ``utils`` module.
 
         Example:
 
         >>> def initial_V_m():
-        >>>     return (lambda x: x[0] < 0.5, 0.0, -85.0)
+        >>>     # Function that expresses domain where potential is not at rest
+        >>>     locator = lambda x: (x[0]-1)** 2 + (x[1]-2.7) ** 2 < 0.4**2
+        >>>     # Assigning different values of V_m to that area
+        >>>     cells = fem.locate_dofs_geometrical(self.V1, locator)
+        >>>     self.V_m_n.x.array[:] = -84
+        >>>     self.V_m_n.x.array[cells] = np.full_like(cells, -60)
         """
         raise NotImplementedError(
             "Method initial_V_m must be implemented for the model to work."
