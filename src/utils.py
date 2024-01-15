@@ -217,7 +217,7 @@ def plot_function(
     plotter.add_text(
         f"{function_name}", position="upper_edge", font_size=14, color="black"
     )
-    plotter.add_mesh(grid, show_edges=show_mesh, lighting=shadow)
+    plotter.add_mesh(grid, show_edges=show_mesh, lighting=shadow, cmap='coolwarm')
     plotter.view_vector(camera_direction)
     plotter.camera.zoom(zoom)
     if save_to is not None:

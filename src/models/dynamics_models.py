@@ -167,6 +167,7 @@ class BidomainModel(Common, BaseDynamicsModel):
                     lighting=True,
                     smooth_shading=True,
                     clim=[-100, 50],
+                    cmap='coolwarm'
                 )
                 plotter.add_title("t = %.3f" % t, font_size=24)
                 if camera != None:
