@@ -7,6 +7,7 @@ import numpy as np
 
 
 class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
+    C_m = 1.0
     a = 0.13
     b = 0.013
     c1 = 0.26

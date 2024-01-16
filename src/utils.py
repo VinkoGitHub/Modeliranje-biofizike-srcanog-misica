@@ -4,13 +4,74 @@ from dolfinx.io import gmshio
 from typing import Callable
 from mpi4py import MPI
 import numpy as np
-import pyvista
 import gmsh
+import pyvista
 import ufl
 
 
 # mesh.Mesh utilities
-def heart_slice(coarseness: float = 1e-1) -> mesh.Mesh:
+def right_ventricle(coarseness: float = 0.2) -> mesh.Mesh:
+    # Initialize gmsh:
+    gmsh.initialize()
+    model = gmsh.model()
+    # paremeters for outer ellipse
+    R1 = 3.0
+    R2 = -8.0
+    Point1 = model.occ.add_point(0.0, 0.0, 0.0, coarseness)
+    Point2 = model.occ.add_point(R1 * np.cos(0), R2 * np.sin(0), 0.0, coarseness)
+    Point3 = model.occ.add_point(
+        R1 * np.cos(np.pi / 2), R2 * np.sin(np.pi / 2), 0.0, coarseness
+    )
+    Point4 = model.occ.add_point(
+        R1 * np.cos(np.pi / 2), R2 * np.sin(np.pi / 2), 0.0, coarseness
+    )
+    Ellipse_arc = model.occ.add_ellipse_arc(Point2, Point1, Point3, Point4)
+    # parameters for inner ellipse
+    r1 = 2.0
+    r2 = -7.0
+    point1 = model.occ.add_point(0.0, 0.0, 0.0, coarseness)
+    point2 = model.occ.add_point(r1 * np.cos(0), r2 * np.sin(0), 0.0, coarseness)
+    point3 = model.occ.add_point(
+        r1 * np.cos(np.pi / 2), r2 * np.sin(np.pi / 2), 0.0, coarseness
+    )
+    point4 = model.occ.add_point(
+        r1 * np.cos(np.pi / 2), r2 * np.sin(np.pi / 2), 0.0, coarseness
+    )
+    ellipse_arc = model.occ.add_ellipse_arc(point2, point1, point3, point4)
+    # define lines to close a surface
+    line1 = model.occ.add_line(point2, Point2)
+    line2 = model.occ.add_line(Point4, point4)
+    # define a loop
+    loop1 = model.occ.add_curve_loop([line1, Ellipse_arc, line2, -ellipse_arc])
+    # define surface:
+    surface = model.occ.add_plane_surface([loop1])
+    # revolve the surface to get the volume
+    # revolve the surface to get the volume
+    model.occ.revolve(
+        dimTags=[(2, surface)], x=0, y=0, z=0, ax=0, ay=1, az=0, angle=4 * np.pi / 3
+    )
+    # rotate the volume to be symmetric about z-axis
+    model.occ.rotate(dimTags=[(3, 1)], x=0, y=0, z=0, ax=1, ay=0, az=0, angle=np.pi / 2)
+    model.occ.rotate(dimTags=[(3, 1)], x=0, y=0, z=0, ax=0, ay=0, az=1, angle=np.pi / 2)
+    # Create the relevant data structures from Gmsh model
+    model.occ.synchronize()
+    # add the volume to a physical group
+    model.addPhysicalGroup(3, [1], name="Left ventricle")
+    # Generate mesh:
+    model.mesh.generate(3)
+    # Creates graphical user interface
+    # if "close" not in sys.argv:  # this should be included to
+    #    gmsh.fltk.run()  # visualize mesh in gmsh GUI
+    # Convert to Dolfinx mesh format
+    domain, cell_markers, facet_markers = gmshio.model_to_mesh(
+        model, MPI.COMM_WORLD, 0, 3
+    )
+    # It finalize the Gmsh API
+    gmsh.finalize()
+    return domain
+
+
+def heart_slice(coarseness: float = 0.1) -> mesh.Mesh:
     # Initialize gmsh:
     gmsh.initialize()
     model = gmsh.model()
@@ -134,7 +195,7 @@ def create_cube(Nx: int, Ny: int, Nz: int) -> mesh.Mesh:
     return mesh.create_unit_cube(MPI.COMM_WORLD, Nx, Ny, Nz)
 
 
-def import_mesh_(filename: str):
+def import_mesh(filename: str):
     """Import mesh from an .xdmf file."""
     with io.XDMFFile(MPI.COMM_WORLD, filename, "r") as xdmf:
         return xdmf.read_mesh(name="Grid")
@@ -217,7 +278,7 @@ def plot_function(
     plotter.add_text(
         f"{function_name}", position="upper_edge", font_size=14, color="black"
     )
-    plotter.add_mesh(grid, show_edges=show_mesh, lighting=shadow, cmap='coolwarm')
+    plotter.add_mesh(grid, show_edges=show_mesh, lighting=shadow, cmap="coolwarm")
     plotter.view_vector(camera_direction)
     plotter.camera.zoom(zoom)
     if save_to is not None:

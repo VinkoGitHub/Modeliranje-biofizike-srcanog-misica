@@ -119,15 +119,6 @@ class BidomainModel(Common, BaseDynamicsModel):
         elif save_to[-4:] == ".mp4":
             plotter.open_movie("animations/" + save_to, framerate=fps)
 
-        grid.point_data["V_m"] = self.V_m_n.x.array
-        plotter.add_mesh(
-            grid,
-            show_edges=False,
-            lighting=True,
-            smooth_shading=True,
-            clim=[-100, 50],
-        )
-
         # List of signal values for each time step
         self.signal_point = signal_point
         self.signal = []
@@ -136,6 +127,23 @@ class BidomainModel(Common, BaseDynamicsModel):
         iteration_number = 0
         # Iterate through time
         for t in tqdm(self.time, desc="Solving problem"):
+            # Update plot
+            if iteration_number % sparser == 0:
+                grid.point_data["V_m"] = self.V_m_n.x.array[:]
+                plotter.add_mesh(
+                    grid,
+                    show_edges=False,
+                    lighting=True,
+                    smooth_shading=True,
+                    clim=[-100, 50],
+                    cmap="plasma",
+                )
+                plotter.add_title("t = %.3f" % t, font_size=24)
+                if camera != None:
+                    plotter.view_vector([1, -1, -1])
+                plotter.write_frame()
+                #plotter.clear()
+
             # Appending the transmembrane potential value at some point to a list
             if signal_point != None:
                 self.signal.append(
@@ -156,23 +164,6 @@ class BidomainModel(Common, BaseDynamicsModel):
 
             # 3rd step of Strang splitting
             self.V_m_n.x.array[:] = self.cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
-
-            if iteration_number % sparser == 0:
-                # Update plot
-                plotter.clear()
-                grid.point_data["V_m"] = self.V_m_n.x.array[:]
-                plotter.add_mesh(
-                    grid,
-                    show_edges=False,
-                    lighting=True,
-                    smooth_shading=True,
-                    clim=[-100, 50],
-                    cmap='coolwarm'
-                )
-                plotter.add_title("t = %.3f" % t, font_size=24)
-                if camera != None:
-                    plotter.view_vector([1, -1, -1])
-                plotter.write_frame()
 
             iteration_number += 1
 
