@@ -67,7 +67,7 @@ class BaseDynamicsModel(metaclass=ABCMeta):
 
         Example:
 
-        >>> def initial_V_m():
+        >>> def initial_V_m(self):
         >>>     # Function that expresses domain where potential is not at rest
         >>>     locator = lambda x: (x[0]-1)** 2 + (x[1]-2.7) ** 2 < 0.4**2
         >>>     # Assigning different values of V_m to that area
@@ -144,5 +144,33 @@ class BaseDynamicsModel(metaclass=ABCMeta):
         Deafult conductivities are predefined constants and if ``longitudinal_fibres``
         and ``transversal_fibres`` are defined as parameters, conductivities become
         tensor quantities. Also, whole method can be overloaded to define conductivities
-        differently."""
+        differently.
+        
+        Example:
+        -----------
+
+        >>> def conductivity(self):
+        >>>    longitudinal_fibres = [1, 0, 0]
+        >>>    transversal_fibres = [0, 1, 0]
+        >>>
+        >>>    # Muscle sheets
+        >>>    self.sheet_l = ufl.as_vector(longitudinal_fibres)
+        >>>    self.sheet_n = ufl.as_vector(transversal_fibres)
+        >>>
+        >>>    # Healthy conductivities
+        >>>    self.M_i = (
+        >>>        self.SIGMA_IT * ufl.Identity(len(longitudinal_fibres))
+        >>>        + (self.SIGMA_IL - self.SIGMA_IT)
+        >>>        * ufl.outer(self.sheet_l, self.sheet_l)
+        >>>        + (self.SIGMA_IN - self.SIGMA_IT)
+        >>>        * ufl.outer(self.sheet_n, self.sheet_n)
+        >>>    )
+        >>>    self.M_e = (
+        >>>        self.SIGMA_ET * ufl.Identity(len(transversal_fibres))
+        >>>        + (self.SIGMA_EL - self.SIGMA_ET)
+        >>>        * ufl.outer(self.sheet_l, self.sheet_l)
+        >>>        + (self.SIGMA_EN - self.SIGMA_ET)
+        >>>        * ufl.outer(self.sheet_n, self.sheet_n)
+        >>>    )
+        """
         pass

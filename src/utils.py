@@ -10,7 +10,7 @@ import ufl
 
 
 # mesh.Mesh utilities
-def right_ventricle(coarseness: float = 0.2) -> mesh.Mesh:
+def ventricle(coarseness: float = 0.2) -> mesh.Mesh:
     # Initialize gmsh:
     gmsh.initialize()
     model = gmsh.model()
@@ -182,17 +182,19 @@ def heart_slice(coarseness: float = 0.1) -> mesh.Mesh:
     return domain
 
 
-def create_square(Nx: int, Ny: int) -> mesh.Mesh:
+def rectangle(x: float = 1, y: float = 1, Nx: int = 32, Ny: int = 32) -> mesh.Mesh:
     """Create a unit square mesh which contains Nx points
     in x-direction and Ny points in y-direction."""
-    return mesh.create_unit_square(MPI.COMM_WORLD, Nx, Ny)
+    return mesh.create_rectangle(MPI.COMM_WORLD, [(0, 0), (x, y)], [Nx, Ny])
 
 
-def create_cube(Nx: int, Ny: int, Nz: int) -> mesh.Mesh:
+def box(
+    x: float = 1, y: float = 1, z: float = 1, Nx: int = 32, Ny: int = 32, Nz: int = 32
+) -> mesh.Mesh:
     """Create a unit box mesh which contains Nx points
     in x-direction, Ny points in y-direction and Nz points in
     z-direction."""
-    return mesh.create_unit_cube(MPI.COMM_WORLD, Nx, Ny, Nz)
+    return mesh.create_box(MPI.COMM_WORLD, [(0, 0, 0), (x, y, z)], [Nx, Ny, Nz])
 
 
 def import_mesh(filename: str):
@@ -278,7 +280,7 @@ def plot_function(
     plotter.add_text(
         f"{function_name}", position="upper_edge", font_size=14, color="black"
     )
-    plotter.add_mesh(grid, show_edges=show_mesh, lighting=shadow, cmap="coolwarm")
+    plotter.add_mesh(grid, show_edges=show_mesh, lighting=shadow, cmap="plasma")
     plotter.view_vector(camera_direction)
     plotter.camera.zoom(zoom)
     if save_to is not None:
