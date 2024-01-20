@@ -151,7 +151,9 @@ class BidomainModel(Common, BaseDynamicsModel):
                 )
 
             # 1st step of Strang splitting
-            self.V_m_n.x.array[:] = self.cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
+            self.V_m_n.x.array[:] = self.cell_model.step_V_m(
+                dt / 2, t, self.V_m_n.x.array
+            )
 
             # 2nd step of Strang splitting
             problem.solve()
@@ -163,7 +165,9 @@ class BidomainModel(Common, BaseDynamicsModel):
             self.V_m_n.x.array[:] = self.v_.x.array[self.sub1]
 
             # 3rd step of Strang splitting
-            self.V_m_n.x.array[:] = self.cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
+            self.V_m_n.x.array[:] = self.cell_model.step_V_m(
+                dt / 2, t, self.V_m_n.x.array
+            )
 
             iteration_number += 1
 
@@ -255,19 +259,19 @@ class MonodomainModel(Common, BaseDynamicsModel):
         self.initial_V_m()
 
         # Define conductivity values with respect to the cell model
-        self.SIGMA_L = sigma_il / cell_model.C_m / chi  # cm^2/ms
-        self.SIGMA_T = sigma_it / cell_model.C_m / chi  # cm^2/ms
-        self.SIGMA_N = sigma_in / cell_model.C_m / chi  # cm^2/ms
+        self.SIGMA_IL = sigma_il / cell_model.C_m / chi  # cm^2/ms
+        self.SIGMA_IT = sigma_it / cell_model.C_m / chi  # cm^2/ms
+        self.SIGMA_IN = sigma_in / cell_model.C_m / chi  # cm^2/ms
 
         # Define conductivity tensors
         self.conductivity()
 
         # Ishemic conductivities
         if self.ischemia() is not None:
-            self.M = ufl.conditional(
+            self.M_i = ufl.conditional(
                 self.ischemia()[0](self.x),
                 self.ischemia()[1],
-                self.M,
+                self.M_i,
             )
 
     def solve(
@@ -282,7 +286,7 @@ class MonodomainModel(Common, BaseDynamicsModel):
         self.solve.__doc__
 
         dt = T / steps
-        self.M = self.M * lambda_ / (1 + lambda_)
+        self.M = self.M_i * lambda_ / (1 + lambda_)
 
         # Defining a ufl weak form and corresponding linear problem
         F = (self.V_m - self.V_m_n) / dt * self.phi * ufl.dx + ufl.inner(
@@ -339,7 +343,9 @@ class MonodomainModel(Common, BaseDynamicsModel):
                 )
 
             # 1st step of Strang splitting
-            self.V_m_n.x.array[:] = self.cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
+            self.V_m_n.x.array[:] = self.cell_model.step_V_m(
+                dt / 2, t, self.V_m_n.x.array
+            )
 
             # 2nd step of Strang splitting
             problem.solve()
@@ -347,7 +353,9 @@ class MonodomainModel(Common, BaseDynamicsModel):
             self.V_m_n.x.array[:] = self.V_m_.x.array[:]
 
             # 3rd step of Strang splitting
-            self.V_m_n.x.array[:] = self.cell_model.step_V_m(dt / 2, self.V_m_n.x.array)
+            self.V_m_n.x.array[:] = self.cell_model.step_V_m(
+                dt / 2, t, self.V_m_n.x.array
+            )
 
             iteration_number += 1
 
@@ -355,7 +363,7 @@ class MonodomainModel(Common, BaseDynamicsModel):
 
     def conductivity(self):
         self.conductivity.__doc__
-        self.M = self.SIGMA_L * ufl.Identity(self.d)
+        self.M_i = self.SIGMA_IL * ufl.Identity(self.d)
 
     def plot_ischemia(
         self,

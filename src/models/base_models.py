@@ -21,8 +21,17 @@ class Common:
 
 
 class BaseCellModel(metaclass=ABCMeta):
+    def apply_current(self):
+        """
+        Default value of applied current is 0. In this function you can define
+        the position of applying a current by modifying `I_app` as a function.
+        Also, you can change the duration of the stimulation by changinig
+        the `self.I_app_duration` parameter.
+        """
+        self.I_app_duration = 0
+
     @abstractmethod
-    def step_V_m(dt: float, V: np.ndarray, *args) -> list[np.ndarray]:
+    def step_V_m(dt: float, t: float, V: np.ndarray, *args) -> list[np.ndarray]:
         """
         A function that computes a solution of the cell dynamics equations
         for one timestep --> [``dV/dt = I_ion(V, w)``] and gating variables equations.
@@ -145,7 +154,7 @@ class BaseDynamicsModel(metaclass=ABCMeta):
         and ``transversal_fibres`` are defined as parameters, conductivities become
         tensor quantities. Also, whole method can be overloaded to define conductivities
         differently.
-        
+
         Example:
         -----------
 

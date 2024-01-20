@@ -1,5 +1,5 @@
 from src.models.base_models import BaseCellModel, Common
-from src.utils import RK2_step, RK3_step, RK4_step
+from src.utils import RK2_step, RK3_step, RK4_step, plot_function
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from dolfinx import fem, mesh
@@ -23,9 +23,18 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
     def __init__(self, domain, w_0: float = 0.0):
         super().__init__(domain)
         self.w = fem.Function(self.V1)
+        self.w.x.array[:] = w_0
+        self.I_app = fem.Function(self.V1)
+        self.apply_current()
 
-    def step_V_m(self, dt: float, V: np.ndarray) -> np.ndarray:
+    def step_V_m(
+        self,
+        dt: float,
+        t: float,
+        V: np.ndarray,
+    ) -> np.ndarray:
         w = self.w.x.array
+        I_app = self.I_app.x.array
 
         dVdt = lambda V: (
             self.c1
@@ -34,11 +43,32 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
             * (V - self.V_TH)
             * (self.V_PEAK - V)
             - self.c2 / self.V_AMP * (V - self.V_REST) * w
+            + I_app * (t < self.I_app_duration)
         )
         dwdt = lambda w: self.b * (V - self.V_REST - self.c3 * w)
         self.w.x.array[:] = RK2_step(dwdt, dt, w)
 
         return RK2_step(dVdt, dt, V)
+
+    def plot_I_app(
+        self,
+        camera_direction: list[float] = [1, 1, 1],
+        zoom: float = 1.0,
+        shadow: bool = False,
+        show_mesh: bool = True,
+        save_to: str | None = None,
+    ):
+        """A function that plots initial applied current.\n
+        Plotting parameters can be passed."""
+        plot_function(
+            self.I_app,
+            "applied current",
+            camera_direction,
+            zoom,
+            shadow,
+            show_mesh,
+            save_to,
+        )
 
     def visualize(self, T: float, V_0: float, w_0: float):
         def fun(t, z):
@@ -64,14 +94,13 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
         plt.show()
 
 
-class Noble(Common):
+class Noble(Common, BaseCellModel):
     C_m = 12.0
     gbar_Na = 400.0
     gbar_K2 = 1.2
     g_i = 0.14
     v_Na = 40.0
     v_K = -100.0
-    I_app = 0.0
 
     def __init__(
         self, domain: mesh.Mesh, m_0: float = 0.0, h_0: float = 0.9, n_0: float = 0.6
@@ -83,11 +112,14 @@ class Noble(Common):
         self.h.x.array[:] = h_0
         self.n = fem.Function(self.V1)
         self.n.x.array[:] = n_0
+        self.I_app = fem.Function(self.V1)
+        self.apply_current()
 
-    def step_V_m(self, dt: float, V: np.ndarray) -> np.ndarray:
+    def step_V_m(self, dt: float, t: float, V: np.ndarray) -> np.ndarray:
         m = self.m.x.array
         h = self.h.x.array
         n = self.n.x.array
+        I_app = self.I_app.x.array
 
         self.g_K1 = 1.2 * np.exp(-(V + 90) / 50) + 0.015 * np.exp((V + 90) / 60)
         self.g_K2 = self.gbar_K2 * n**4
@@ -99,7 +131,7 @@ class Noble(Common):
             * (
                 self.g_Na * (V - self.v_Na)
                 + (self.g_K1 + self.g_K2) * (V - self.v_K)
-                + self.I_app
+                - I_app * (t < self.I_app_duration)
             )
         )
 
@@ -126,6 +158,26 @@ class Noble(Common):
         self.n.x.array[:] = RK3_step(dndt, dt, n)
 
         return RK2_step(dVdt, dt, V)
+
+    def plot_I_app(
+        self,
+        camera_direction: list[float] = [1, 1, 1],
+        zoom: float = 1.0,
+        shadow: bool = False,
+        show_mesh: bool = True,
+        save_to: str | None = None,
+    ):
+        """A function that plots initial applied current.\n
+        Plotting parameters can be passed."""
+        plot_function(
+            self.I_app,
+            "applied current",
+            camera_direction,
+            zoom,
+            shadow,
+            show_mesh,
+            save_to,
+        )
 
     def visualize(
         self, T: float, V_0: float, m_0: float = 0.0, h_0: float = 0.9, n_0: float = 0.6
@@ -185,9 +237,8 @@ class Noble(Common):
         )
 
 
-class BeelerReuter(Common):
+class BeelerReuter(Common, BaseCellModel):
     C_m = 1.0
-    I_app = 0.0
 
     def __init__(
         self,
@@ -216,7 +267,7 @@ class BeelerReuter(Common):
         self.x1 = fem.Function(self.V1)
         self.x1.x.array[:] = x_0
 
-    def step_V_m(self, dt: float, V: np.ndarray) -> np.ndarray:
+    def step_V_m(self, dt: float, t: float, V: np.ndarray) -> np.ndarray:
         c = self.c.x.array
         m = self.m.x.array
         h = self.h.x.array
@@ -224,6 +275,7 @@ class BeelerReuter(Common):
         d = self.d.x.array
         f = self.f.x.array
         x1 = self.x1.x.array
+        I_app = self.I_app.x.array
 
         I_K1 = 0.35 * (
             4
@@ -235,7 +287,7 @@ class BeelerReuter(Common):
         I_Na = (4 * m**3 * h * j + 0.003) * (V - 50)
         I_Ca = 0.09 * d * f * (V - 127.698 + 13.0287 * np.log(c))
 
-        dVdt = lambda V: -1 / self.C_m * (I_K1 + I_x1 + I_Na + I_Ca - self.I_app)
+        dVdt = lambda V: -1 / self.C_m * (I_K1 + I_x1 + I_Na + I_Ca - I_app * (t < self.I_app_duration))
 
         dcdt = lambda c: 0.07 * (1 - c) - I_Ca
 
@@ -279,6 +331,26 @@ class BeelerReuter(Common):
 
         return RK4_step(dVdt, dt, V)
 
+    def plot_I_app(
+        self,
+        camera_direction: list[float] = [1, 1, 1],
+        zoom: float = 1.0,
+        shadow: bool = False,
+        show_mesh: bool = True,
+        save_to: str | None = None,
+    ):
+        """A function that plots initial applied current.\n
+        Plotting parameters can be passed."""
+        plot_function(
+            self.I_app,
+            "applied current",
+            camera_direction,
+            zoom,
+            shadow,
+            show_mesh,
+            save_to,
+        )
+        
     def visualize(
         self,
         T: float,
