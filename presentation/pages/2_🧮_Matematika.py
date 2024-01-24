@@ -34,10 +34,12 @@ bullet(
     "Rascjepni kanali",
     "Maxwellova jednadžba",
 )
-st.divider()
 latex_equation(r'\nabla\times\bm{E} = -\frac{\partial\bm{B}}{\partial t}')
 st.divider()
 bullet('Kvazistacionarnost')
-st.divider()
 latex_equation(r'\nabla\times\bm{E} = 0 \quad\Rightarrow\quad \bm{E} = -\nabla U')
 latex_equation(r'\bm{J} = M\bm{E} \quad\Rightarrow\quad \bm{J} = -M\nabla U')
+st.divider()
+bullet('Intracelularni potencijal', 'Ekstracelularni potencijal')
+latex_equation(r'U_i,\quad U_e,\quad V_m \coloneqq U_i - U_e')
+st.divider()
