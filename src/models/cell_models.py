@@ -43,7 +43,8 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
             * (V - self.V_TH)
             * (self.V_PEAK - V)
             - self.c2 / self.V_AMP * (V - self.V_REST) * w
-            + I_app * np.exp(-(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10))
+            + I_app
+            * np.exp(-(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10))
         )
         dwdt = lambda w: self.b * (V - self.V_REST - self.c3 * w)
         self.w.x.array[:] = RK2_step(dwdt, dt, w)
@@ -88,7 +89,9 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
                 * (V - self.V_TH)
                 * (self.V_PEAK - V)
                 - self.c2 / self.V_AMP * (V - self.V_REST) * w
-            ) + I_app_value * np.exp(-(((t - I_app_time) / I_app_duration) ** 2) * np.log(10))
+            ) + I_app_value * np.exp(
+                -(((t - I_app_time) / I_app_duration) ** 2) * np.log(10)
+            )
             dwdt = self.b * (V - self.V_REST - self.c3 * w)
             return [dVdt, dwdt]
 
@@ -141,7 +144,10 @@ class Noble(Common, BaseCellModel):
             * (
                 self.g_Na * (V - self.v_Na)
                 + (self.g_K1 + self.g_K2) * (V - self.v_K)
-                - I_app * np.exp(-(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10))
+                - I_app
+                * np.exp(
+                    -(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10)
+                )
             )
         )
 
@@ -317,7 +323,10 @@ class BeelerReuter(Common, BaseCellModel):
                 + I_x1
                 + I_Na
                 + I_Ca
-                - I_app * np.exp(-(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10))
+                - I_app
+                * np.exp(
+                    -(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10)
+                )
             )
         )
 
@@ -369,6 +378,7 @@ class BeelerReuter(Common, BaseCellModel):
         zoom: float = 1.0,
         shadow: bool = False,
         show_mesh: bool = True,
+        cmap: str = "coolwarm",
         save_to: str | None = None,
     ):
         """A function that plots initial applied current.\n
@@ -380,6 +390,7 @@ class BeelerReuter(Common, BaseCellModel):
             zoom,
             shadow,
             show_mesh,
+            cmap,
             save_to,
         )
 

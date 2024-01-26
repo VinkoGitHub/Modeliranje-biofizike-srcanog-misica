@@ -74,6 +74,7 @@ class BidomainModel(Common, BaseDynamicsModel):
         steps: int,
         signal_point: list[float] | None = None,
         camera_direction: str | None = None,
+        cmap: str = 'plasma',
         save_to: str = "V_m.gif",
     ):
         self.solve.__doc__
@@ -144,7 +145,7 @@ class BidomainModel(Common, BaseDynamicsModel):
                     lighting=True,
                     smooth_shading=True,
                     clim=[-100, 50],
-                    cmap="plasma",
+                    cmap=cmap,
                     scalar_bar_args=sargs,
                 )
                 plotter.add_title("t = %.3f" % t, font_size=24)

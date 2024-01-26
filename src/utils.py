@@ -206,7 +206,7 @@ def import_mesh(filename: str):
 def plot_mesh(
     domain: mesh.Mesh,
     mesh_name: str = "Mesh",
-    camera_direction: list[float] = [1, 1, 1],
+    camera_direction: list[float] | str = [1, 1, 1],
     zoom: float = 1.0,
     shadow: bool = False,
     save_to: str | None = None,
@@ -219,7 +219,10 @@ def plot_mesh(
     plotter = pyvista.Plotter()
     plotter.add_text(f"{mesh_name}", position="upper_edge", font_size=14, color="black")
     plotter.add_mesh(grid, show_edges=True, lighting=shadow)
-    plotter.view_vector(camera_direction)
+    if type(camera_direction) == list:
+        plotter.view_vector(camera_direction)
+    elif type(camera_direction) == str:
+        plotter.camera_position = camera_direction
     plotter.camera.zoom(zoom)
     if save_to is not None:
         plotter.save_graphic(save_to)
@@ -267,6 +270,7 @@ def plot_function(
     zoom: float = 1.0,
     shadow: bool = False,
     show_mesh: bool = True,
+    cmap: str = "coolwarm",
     save_to: str | None = None,
 ):
     """Plot a dolfinx fem Function."""
@@ -292,7 +296,7 @@ def plot_function(
         grid,
         show_edges=show_mesh,
         lighting=shadow,
-        cmap="coolwarm",
+        cmap=cmap,
         scalar_bar_args=sargs,
     )
     plotter.view_vector(camera_direction)
