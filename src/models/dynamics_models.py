@@ -73,7 +73,7 @@ class BidomainModel(Common, BaseDynamicsModel):
         T: float,
         steps: int,
         signal_point: list[float] | None = None,
-        camera: list[float] | None = None,
+        camera_direction: str | None = None,
         save_to: str = "V_m.gif",
     ):
         self.solve.__doc__
@@ -107,7 +107,7 @@ class BidomainModel(Common, BaseDynamicsModel):
         grid = pyvista.UnstructuredGrid(*plot.vtk_mesh(self.V1))
         plotter = pyvista.Plotter(notebook=True, off_screen=False)
 
-        if steps < 600:
+        if steps <= 600:
             fps = int(steps / 10)
             sparser = 1
         else:
@@ -130,6 +130,14 @@ class BidomainModel(Common, BaseDynamicsModel):
             # Update plot
             if iteration_number % sparser == 0:
                 grid.point_data["V_m"] = self.V_m_n.x.array[:]
+                sargs = dict(
+                    title="",
+                    height=0.5,
+                    vertical=True,
+                    position_x=0.85,
+                    position_y=0.25,
+                    font_family="times",
+                )
                 plotter.add_mesh(
                     grid,
                     show_edges=False,
@@ -137,12 +145,23 @@ class BidomainModel(Common, BaseDynamicsModel):
                     smooth_shading=True,
                     clim=[-100, 50],
                     cmap="plasma",
+                    scalar_bar_args=sargs,
                 )
                 plotter.add_title("t = %.3f" % t, font_size=24)
-                if camera != None:
-                    plotter.view_vector([1, -1, -1])
+                plotter.enable_parallel_projection()
+                if camera_direction != None:
+                    plotter.camera_position = camera_direction
                 plotter.write_frame()
                 # plotter.clear()
+                if t<36 and t>34:
+                    plotter.save_graphic('figures/slice/BR_25.pdf')
+                elif t<86 and t>84:
+                    plotter.save_graphic('figures/slice/BR_75.pdf')
+                elif t<231 and t>229:
+                    plotter.save_graphic('figures/slice/BR_220.pdf')
+                elif t<301 and t>299:
+                    plotter.save_graphic('figures/slice/BR_290.pdf')
+
 
             # Appending the transmembrane potential value at some point to a list
             if signal_point != None:

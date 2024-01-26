@@ -10,7 +10,7 @@ import ufl
 
 
 # mesh.Mesh utilities
-def ventricle(coarseness: float = 0.2) -> mesh.Mesh:
+def heart_ventricle(coarseness: float = 0.2) -> mesh.Mesh:
     # Initialize gmsh:
     gmsh.initialize()
     model = gmsh.model()
@@ -102,14 +102,14 @@ def heart_slice(coarseness: float = 0.1) -> mesh.Mesh:
     point23 = model.geo.add_point(1.6, 1.1, 0, lc)
     point24 = model.geo.add_point(1.5, 2, 0, lc)
     point25 = model.geo.add_point(0.5, 2.6, 0, lc)
-    point26 = model.geo.add_point(2.7, 2.9, 0, lc)
-    point27 = model.geo.add_point(2.7, 1.9, 0, lc)
-    point28 = model.geo.add_point(2.6, 0.9, 0, lc)
-    point29 = model.geo.add_point(2.3, 0.1, 0, lc)
-    point30 = model.geo.add_point(3.4, 0.2, 0, lc)
-    point31 = model.geo.add_point(3.9, 1, 0, lc)
-    point32 = model.geo.add_point(3.9, 1.9, 0, lc)
-    point33 = model.geo.add_point(3.7, 2.5, 0, lc)
+    point26 = model.geo.add_point(2.0, 3.5, 0, lc)
+    point27 = model.geo.add_point(2.3, 2.3, 0, lc)
+    point28 = model.geo.add_point(2.4, 0.9, 0, lc)
+    point29 = model.geo.add_point(2.3, -0.5, 0, lc)
+    point30 = model.geo.add_point(3.4, 0.0, 0, lc)
+    point31 = model.geo.add_point(4.1, 1, 0, lc)
+    point32 = model.geo.add_point(4.2, 1.9, 0, lc)
+    point33 = model.geo.add_point(3.8, 3.0, 0, lc)
     # Define curves:
     spline1 = model.geo.add_spline(
         [
@@ -280,7 +280,21 @@ def plot_function(
     plotter.add_text(
         f"{function_name}", position="upper_edge", font_size=14, color="black"
     )
-    plotter.add_mesh(grid, show_edges=show_mesh, lighting=shadow, cmap="plasma")
+    sargs = dict(
+        title="",
+        height=0.5,
+        vertical=True,
+        position_x=0.85,
+        position_y=0.25,
+        font_family="times",
+    )
+    plotter.add_mesh(
+        grid,
+        show_edges=show_mesh,
+        lighting=shadow,
+        cmap="coolwarm",
+        scalar_bar_args=sargs,
+    )
     plotter.view_vector(camera_direction)
     plotter.camera.zoom(zoom)
     if save_to is not None:

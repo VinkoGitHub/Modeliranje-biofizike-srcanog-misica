@@ -21,14 +21,23 @@ class Common:
 
 
 class BaseCellModel(metaclass=ABCMeta):
+    I_app_time = 10
+    I_app_duration = 1
     def apply_current(self):
         """
         Default value of applied current is 0. In this function you can define
         the position of applying a current by modifying `I_app` as a function.
         Also, you can change the duration of the stimulation by changinig
         the `self.I_app_duration` parameter.
+
+        Example:
+        ----------
+        >>> def apply_current(self,):
+        >>>     locator = lambda x: (x[0] - 1) ** 2 < 0.1**2
+        >>>     cells = fem.locate_dofs_geometrical(self.V1, locator)
+        >>>     self.I_app.x.array[cells] = np.full_like(cells, 10)
+        >>>     self.I_app_duration = 20
         """
-        self.I_app_duration = 0
 
     @abstractmethod
     def step_V_m(dt: float, t: float, V: np.ndarray, *args) -> list[np.ndarray]:

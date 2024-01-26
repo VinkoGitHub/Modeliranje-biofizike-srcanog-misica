@@ -13,8 +13,8 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
     c1 = 0.26
     c2 = 0.1
     c3 = 1.0
-    V_PEAK = 40
     V_REST = -85
+    V_PEAK = 40
     V_AMP = V_PEAK - V_REST
     V_TH = V_REST + a * V_AMP
     V_AMP = V_PEAK - V_REST
@@ -43,7 +43,7 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
             * (V - self.V_TH)
             * (self.V_PEAK - V)
             - self.c2 / self.V_AMP * (V - self.V_REST) * w
-            + I_app * (t < self.I_app_duration)
+            + I_app * np.exp(-(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10))
         )
         dwdt = lambda w: self.b * (V - self.V_REST - self.c3 * w)
         self.w.x.array[:] = RK2_step(dwdt, dt, w)
@@ -62,7 +62,7 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
         Plotting parameters can be passed."""
         plot_function(
             self.I_app,
-            "applied current",
+            "",
             camera_direction,
             zoom,
             shadow,
@@ -70,7 +70,15 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
             save_to,
         )
 
-    def visualize(self, T: float, V_0: float, w_0: float):
+    def visualize(
+        self,
+        T: float,
+        I_app_value: float,
+        I_app_time: float,
+        I_app_duration: float,
+        V_0: float,
+        w_0: float,
+    ):
         def fun(t, z):
             V, w = z
             dVdt = (
@@ -80,18 +88,20 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
                 * (V - self.V_TH)
                 * (self.V_PEAK - V)
                 - self.c2 / self.V_AMP * (V - self.V_REST) * w
-            )
+            ) + I_app_value * np.exp(-(((t - I_app_time) / I_app_duration) ** 2) * np.log(10))
             dwdt = self.b * (V - self.V_REST - self.c3 * w)
             return [dVdt, dwdt]
 
-        time = np.linspace(0, T, 500)
+        time = np.linspace(0, T, 1000)
         sol = solve_ivp(fun, [0, T], [V_0, w_0], method="DOP853", t_eval=time)
 
-        plt.plot(sol.t, sol.y[0])
+        plt.plot(sol.t, sol.y[0], color="firebrick")
         plt.xlabel("$t$")
         plt.ylabel("$V_m$")
-        plt.title("Action potential")
+        # plt.title("Action potential")
+        plt.savefig("figures/MFN_actionpotential.pdf")
         plt.show()
+        print("V=", sol.y[0][-1], ", w=", sol.y[1][-1], "at t=", time[-1])
 
 
 class Noble(Common, BaseCellModel):
@@ -131,7 +141,7 @@ class Noble(Common, BaseCellModel):
             * (
                 self.g_Na * (V - self.v_Na)
                 + (self.g_K1 + self.g_K2) * (V - self.v_K)
-                - I_app * (t < self.I_app_duration)
+                - I_app * np.exp(-(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10))
             )
         )
 
@@ -180,7 +190,15 @@ class Noble(Common, BaseCellModel):
         )
 
     def visualize(
-        self, T: float, V_0: float, m_0: float = 0.0, h_0: float = 0.9, n_0: float = 0.6
+        self,
+        T: float,
+        I_app_value: float,
+        I_app_time: float,
+        I_app_duration: float,
+        V_0: float,
+        m_0: float = 0.0,
+        h_0: float = 0.9,
+        n_0: float = 0.6,
     ):
         def fun(t, z):
             V, m, h, n = z
@@ -195,7 +213,8 @@ class Noble(Common, BaseCellModel):
                 * (
                     self.g_Na * (V - self.v_Na)
                     + (self.g_K1 + self.g_K2) * (V - self.v_K)
-                    + self.I_app
+                    - I_app_value
+                    * np.exp(-(((t - I_app_time) / I_app_duration) ** 2) * np.log(10))
                 )
             )
 
@@ -221,10 +240,11 @@ class Noble(Common, BaseCellModel):
         time = np.linspace(0, T, 1000)
         sol = solve_ivp(fun, [0, T], [V_0, m_0, h_0, n_0], method="DOP853", t_eval=time)
 
-        plt.plot(sol.t, sol.y[0])
+        plt.plot(sol.t, sol.y[0], color="darkblue")
         plt.xlabel("$t$")
         plt.ylabel("$V_m$")
-        plt.title("Action potential")
+        # plt.title("Action potential")
+        plt.savefig("figures/N_actionpotential.pdf")
         plt.show()
         print(
             "U trenutku t=",
@@ -266,6 +286,8 @@ class BeelerReuter(Common, BaseCellModel):
         self.f.x.array[:] = f_0
         self.x1 = fem.Function(self.V1)
         self.x1.x.array[:] = x_0
+        self.I_app = fem.Function(self.V1)
+        self.apply_current()
 
     def step_V_m(self, dt: float, t: float, V: np.ndarray) -> np.ndarray:
         c = self.c.x.array
@@ -287,7 +309,17 @@ class BeelerReuter(Common, BaseCellModel):
         I_Na = (4 * m**3 * h * j + 0.003) * (V - 50)
         I_Ca = 0.09 * d * f * (V - 127.698 + 13.0287 * np.log(c))
 
-        dVdt = lambda V: -1 / self.C_m * (I_K1 + I_x1 + I_Na + I_Ca - I_app * (t < self.I_app_duration))
+        dVdt = (
+            lambda V: -1
+            / self.C_m
+            * (
+                I_K1
+                + I_x1
+                + I_Na
+                + I_Ca
+                - I_app * np.exp(-(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10))
+            )
+        )
 
         dcdt = lambda c: 0.07 * (1 - c) - I_Ca
 
@@ -350,10 +382,13 @@ class BeelerReuter(Common, BaseCellModel):
             show_mesh,
             save_to,
         )
-        
+
     def visualize(
         self,
         T: float,
+        I_app_value: float,
+        I_app_time: float,
+        I_app_duration: float,
         V_0: float,
         c_0: float = 1,
         m_0: float = 0.011,
@@ -376,7 +411,18 @@ class BeelerReuter(Common, BaseCellModel):
             I_Na = (4 * m**3 * h * j + 0.003) * (V - 50)
             I_Ca = 0.09 * d * f * (V - 127.698 + 13.0287 * np.log(c))
 
-            dVdt = -1 / self.C_m * (I_K1 + I_x1 + I_Na + I_Ca - self.I_app)
+            dVdt = (
+                -1
+                / self.C_m
+                * (
+                    I_K1
+                    + I_x1
+                    + I_Na
+                    + I_Ca
+                    - I_app_value
+                    * np.exp(-(((t - I_app_time) / I_app_duration) ** 2) * np.log(10))
+                )
+            )
 
             dcdt = 0.07 * (1 - c) - I_Ca
 
@@ -416,14 +462,15 @@ class BeelerReuter(Common, BaseCellModel):
             fun,
             [0, T],
             [V_0, c_0, m_0, h_0, j_0, d_0, f_0, x_0],
-            # method="DOP853",
+            method="DOP853",
             t_eval=time,
         )
 
-        plt.plot(sol.t, sol.y[0])
+        plt.plot(sol.t, sol.y[0], color="forestgreen")
         plt.xlabel("$t$")
         plt.ylabel("$V_m$")
-        plt.title("Action potential")
+        # plt.title("Action potential")
+        plt.savefig("figures/BR_actionpotential.pdf")
         plt.show()
 
         print(
