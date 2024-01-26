@@ -375,6 +375,7 @@ class BeelerReuter(Common, BaseCellModel):
     def plot_I_app(
         self,
         camera_direction: list[float] = [1, 1, 1],
+        function_name: str = "applied currrent",
         zoom: float = 1.0,
         shadow: bool = False,
         show_mesh: bool = True,
@@ -385,7 +386,7 @@ class BeelerReuter(Common, BaseCellModel):
         Plotting parameters can be passed."""
         plot_function(
             self.I_app,
-            "applied current",
+            function_name,
             camera_direction,
             zoom,
             shadow,

@@ -74,8 +74,10 @@ class BidomainModel(Common, BaseDynamicsModel):
         steps: int,
         signal_point: list[float] | None = None,
         camera_direction: str | None = None,
-        cmap: str = 'plasma',
+        cmap: str = "plasma",
         save_to: str = "V_m.gif",
+        checkpoints: list[int] = [],
+        checkpoint_file: str = "checkpoint",
     ):
         self.solve.__doc__
 
@@ -154,15 +156,10 @@ class BidomainModel(Common, BaseDynamicsModel):
                     plotter.camera_position = camera_direction
                 plotter.write_frame()
                 # plotter.clear()
-                if t<36 and t>34:
-                    plotter.save_graphic('figures/slice/BR_25.pdf')
-                elif t<86 and t>84:
-                    plotter.save_graphic('figures/slice/BR_75.pdf')
-                elif t<231 and t>229:
-                    plotter.save_graphic('figures/slice/BR_220.pdf')
-                elif t<301 and t>299:
-                    plotter.save_graphic('figures/slice/BR_290.pdf')
-
+                for cp in checkpoints:
+                    if t < cp + 0.5 and t > cp - 0.5:
+                        plotter.save_graphic(checkpoint_file + "_" + str(cp) + ".pdf")
+                        break
 
             # Appending the transmembrane potential value at some point to a list
             if signal_point != None:
@@ -225,24 +222,27 @@ class BidomainModel(Common, BaseDynamicsModel):
     def plot_initial_V_m(
         self,
         camera_direction: list[float] = [1, 1, 1],
+        function_name: str = "initial_V_m",
         zoom: float = 1.0,
         shadow: bool = False,
         show_mesh: bool = True,
+        cmap: str = "plasma",
         save_to: str | None = None,
     ):
         """A function that plots initial transmembrane potential.\n
         Plotting parameters can be passed."""
         utils.plot_function(
             self.V_m_n,
-            "initial V_m",
+            function_name,
             camera_direction,
             zoom,
             shadow,
             show_mesh,
+            cmap,
             save_to,
         )
 
-    def plot_signal(self, *args):
+    def plot_signal(self, save_to: str | None = None):
         """A function that plots transmembrane potential at a point
         previously defined as signal point.\n
         Plotting parameters can be passed."""
@@ -250,11 +250,10 @@ class BidomainModel(Common, BaseDynamicsModel):
             raise ValueError("Signal point must be specified when solving the model.")
 
         plt.plot(self.time, self.signal)
-        plt.xlabel("time [ms]")
-        plt.ylabel("signal [mV]")
-        plt.title(
-            "Time dependence of $V_m$ at " + str(self.signal_point),
-        )
+        plt.xlabel("$t$ [ms]")
+        plt.ylabel("$V_m$ [mV]")
+        if save_to is not None:
+            plt.savefig(save_to)
 
 
 class MonodomainModel(Common, BaseDynamicsModel):

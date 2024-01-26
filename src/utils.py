@@ -266,7 +266,7 @@ def evaluate_function_at_point(function: fem.Function, point: list) -> float:
 def plot_function(
     function: fem.Function,
     function_name: str = "function",
-    camera_direction: list[float] = [1, 1, 1],
+    camera_direction: list[float] | str = [1, 1, 1],
     zoom: float = 1.0,
     shadow: bool = False,
     show_mesh: bool = True,
@@ -299,7 +299,10 @@ def plot_function(
         cmap=cmap,
         scalar_bar_args=sargs,
     )
-    plotter.view_vector(camera_direction)
+    if type(camera_direction) == list:
+        plotter.view_vector(camera_direction)
+    elif type(camera_direction) == str:
+        plotter.camera_position = camera_direction
     plotter.camera.zoom(zoom)
     if save_to is not None:
         plotter.save_graphic(save_to)
@@ -311,7 +314,7 @@ def plot_vector_field(
     vector_field: Callable[[ufl.SpatialCoordinate], list],
     tolerance: float = 0.05,
     factor: float = 0.3,
-    camera_direction: list[float] = [1, 1, 1],
+    camera_direction: list[float] | str = [1, 1, 1],
     zoom: float = 1.0,
     save_to: str | None = None,
 ):
@@ -356,7 +359,10 @@ def plot_vector_field(
         color="firebrick",
         show_scalar_bar=False,
     )
-    plotter.view_vector(camera_direction)
+    if type(camera_direction) == list:
+        plotter.view_vector(camera_direction)
+    elif type(camera_direction) == str:
+        plotter.camera_position = camera_direction
     plotter.camera.zoom(zoom)
     if save_to is not None:
         plotter.save_graphic(save_to)
