@@ -10,7 +10,7 @@ import ufl
 
 
 # mesh.Mesh utilities
-def heart_ventricle(coarseness: float = 0.2) -> mesh.Mesh:
+def heart_ventricle(coarseness: float = 0.3) -> mesh.Mesh:
     # Initialize gmsh:
     gmsh.initialize()
     model = gmsh.model()
@@ -206,7 +206,7 @@ def import_mesh(filename: str):
 def plot_mesh(
     domain: mesh.Mesh,
     mesh_name: str = "Mesh",
-    camera_direction: list[float] | str = [1, 1, 1],
+    camera_direction: list[float] | str | None = None,
     zoom: float = 1.0,
     shadow: bool = False,
     save_to: str | None = None,

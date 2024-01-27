@@ -74,7 +74,7 @@ class BidomainModel(Common, BaseDynamicsModel):
         steps: int,
         signal_point: list[float] | None = None,
         camera_direction: str | None = None,
-        cmap: str = "plasma",
+        cmap: str = "jet",
         save_to: str = "V_m.gif",
         checkpoints: list[int] = [],
         checkpoint_file: str = "checkpoint",
