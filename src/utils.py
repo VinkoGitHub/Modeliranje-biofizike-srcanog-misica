@@ -266,10 +266,11 @@ def evaluate_function_at_point(function: fem.Function, point: list) -> float:
 def plot_function(
     function: fem.Function,
     function_name: str = "function",
-    camera_direction: list[float] | str = [1, 1, 1],
+    camera_direction: list[float] | str | None = None,
     zoom: float = 1.0,
     shadow: bool = False,
     show_mesh: bool = True,
+    show_grid: bool = True,
     cmap: str = "coolwarm",
     save_to: str | None = None,
 ):
@@ -282,7 +283,11 @@ def plot_function(
     # We visualize the data
     plotter = pyvista.Plotter()
     plotter.add_text(
-        f"{function_name}", position="upper_edge", font_size=14, color="black"
+        f"{function_name}",
+        position="upper_edge",
+        font_size=14,
+        color="black",
+        font="times",
     )
     sargs = dict(
         title="",
@@ -304,9 +309,20 @@ def plot_function(
     elif type(camera_direction) == str:
         plotter.camera_position = camera_direction
     plotter.camera.zoom(zoom)
+    if show_grid:
+        plotter.show_bounds(
+            font_family="times",
+            xtitle="",
+            ytitle="",
+            ztitle="",
+            grid=False,
+            ticks="both",
+            minor_ticks=True,
+            location="outer",
+        )
     if save_to is not None:
         plotter.save_graphic(save_to)
-    plotter.show()
+        plotter.show()
 
 
 def plot_vector_field(
@@ -314,8 +330,10 @@ def plot_vector_field(
     vector_field: Callable[[ufl.SpatialCoordinate], list],
     tolerance: float = 0.05,
     factor: float = 0.3,
-    camera_direction: list[float] | str = [1, 1, 1],
+    camera_direction: list[float] | str | None = None,
     zoom: float = 1.0,
+    shadow: bool = False,
+    show_grid: bool = True,
     save_to: str | None = None,
 ):
     """A function that plots a vector field defined on a given domain.
@@ -354,19 +372,26 @@ def plot_vector_field(
     )
     plotter = pyvista.Plotter()
     plotter.add_mesh(arrows, color="black")
-    plotter.add_mesh(
-        mesh,
-        color="firebrick",
-        show_scalar_bar=False,
-    )
+    plotter.add_mesh(mesh, color="firebrick", show_scalar_bar=False, lighting=shadow)
     if type(camera_direction) == list:
         plotter.view_vector(camera_direction)
     elif type(camera_direction) == str:
         plotter.camera_position = camera_direction
     plotter.camera.zoom(zoom)
+    if show_grid:
+        plotter.show_bounds(
+            font_family="times",
+            xtitle="",
+            ytitle="",
+            ztitle="",
+            grid=False,
+            ticks="both",
+            minor_ticks=True,
+            location="outer",
+        )
     if save_to is not None:
         plotter.save_graphic(save_to)
-    plotter.show()
+        plotter.show()
 
 
 # Other utilities

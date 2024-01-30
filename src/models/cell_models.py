@@ -53,21 +53,26 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
 
     def plot_I_app(
         self,
-        camera_direction: list[float] = [1, 1, 1],
+        camera_direction: list[float] | str | None = None,
+        function_name: str = "applied currrent",
         zoom: float = 1.0,
         shadow: bool = False,
         show_mesh: bool = True,
+        show_grid: bool = True,
+        cmap: str = "RdBu",
         save_to: str | None = None,
     ):
         """A function that plots initial applied current.\n
         Plotting parameters can be passed."""
         plot_function(
             self.I_app,
-            "",
+            function_name,
             camera_direction,
             zoom,
             shadow,
             show_mesh,
+            show_grid,
+            cmap,
             save_to,
         )
 
@@ -177,21 +182,26 @@ class Noble(Common, BaseCellModel):
 
     def plot_I_app(
         self,
-        camera_direction: list[float] = [1, 1, 1],
+        camera_direction: list[float] | str | None = None,
+        function_name: str = "applied currrent",
         zoom: float = 1.0,
         shadow: bool = False,
         show_mesh: bool = True,
+        show_grid: bool = True,
+        cmap: str = "RdBu",
         save_to: str | None = None,
     ):
         """A function that plots initial applied current.\n
         Plotting parameters can be passed."""
         plot_function(
             self.I_app,
-            "applied current",
+            function_name,
             camera_direction,
             zoom,
             shadow,
             show_mesh,
+            show_grid,
+            cmap,
             save_to,
         )
 
@@ -374,12 +384,13 @@ class BeelerReuter(Common, BaseCellModel):
 
     def plot_I_app(
         self,
-        camera_direction: list[float] = [1, 1, 1],
+        camera_direction: list[float] | str | None = None,
         function_name: str = "applied currrent",
         zoom: float = 1.0,
         shadow: bool = False,
         show_mesh: bool = True,
-        cmap: str = "coolwarm",
+        show_grid: bool = True,
+        cmap: str = "RdBu",
         save_to: str | None = None,
     ):
         """A function that plots initial applied current.\n
@@ -391,6 +402,7 @@ class BeelerReuter(Common, BaseCellModel):
             zoom,
             shadow,
             show_mesh,
+            show_grid,
             cmap,
             save_to,
         )

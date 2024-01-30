@@ -58,13 +58,13 @@ class BidomainModel(Common, BaseDynamicsModel):
         if self.ischemia() is not None:
             self.M_i = ufl.conditional(
                 self.ischemia()[0](self.x),
-                self.ischemia()[1],
+                self.M_i / self.ischemia()[1],
                 self.M_i,
             )
 
             self.M_e = ufl.conditional(
                 self.ischemia()[0](self.x),
-                self.ischemia()[1],
+                self.M_e / self.ischemia()[2],
                 self.M_e,
             )
 
@@ -74,6 +74,7 @@ class BidomainModel(Common, BaseDynamicsModel):
         steps: int,
         signal_point: list[float] | None = None,
         camera_direction: str | None = None,
+        zoom: float = 1.0,
         cmap: str = "jet",
         save_to: str = "V_m.gif",
         checkpoints: list[int] = [],
@@ -115,12 +116,41 @@ class BidomainModel(Common, BaseDynamicsModel):
             sparser = 1
         else:
             fps = 60
-            sparser = int(steps / 900)
+            sparser = round(steps / 900)
 
         if save_to[-4:] == ".gif":
             plotter.open_gif("animations/" + save_to, loop=steps, fps=fps)
         elif save_to[-4:] == ".mp4":
             plotter.open_movie("animations/" + save_to, framerate=fps)
+
+        # Writing a first frame
+        grid.point_data["V_m"] = self.V_m_n.x.array
+        sargs = dict(
+            title="",
+            height=0.5,
+            vertical=True,
+            position_x=0.85,
+            position_y=0.25,
+            font_family="times",
+        )
+        plotter.add_mesh(
+            grid,
+            show_edges=False,
+            lighting=True,
+            smooth_shading=True,
+            clim=[-100, 50],
+            cmap=cmap,
+            scalar_bar_args=sargs,
+        )
+        plotter.add_title("t = 0.000", font_size=24, font="times")
+
+        if type(camera_direction) == list:
+            plotter.view_vector(camera_direction)
+        elif type(camera_direction) == str:
+            plotter.camera_position = camera_direction
+
+        plotter.camera.zoom(zoom)
+        plotter.write_frame()
 
         # List of signal values for each time step
         self.signal_point = signal_point
@@ -132,15 +162,7 @@ class BidomainModel(Common, BaseDynamicsModel):
         for t in tqdm(self.time, desc="Solving problem"):
             # Update plot
             if iteration_number % sparser == 0:
-                grid.point_data["V_m"] = self.V_m_n.x.array[:]
-                sargs = dict(
-                    title="",
-                    height=0.5,
-                    vertical=True,
-                    position_x=0.85,
-                    position_y=0.25,
-                    font_family="times",
-                )
+                grid.point_data["V_m"] = self.V_m_n.x.array
                 plotter.add_mesh(
                     grid,
                     show_edges=False,
@@ -150,19 +172,28 @@ class BidomainModel(Common, BaseDynamicsModel):
                     cmap=cmap,
                     scalar_bar_args=sargs,
                 )
-                plotter.add_title("t = %.3f" % t, font_size=24)
-                plotter.enable_parallel_projection()
-                if camera_direction != None:
-                    plotter.camera_position = camera_direction
+                plotter.add_title("t = %.3f" % t, font_size=24, font="times")
                 plotter.write_frame()
-                # plotter.clear()
+
                 for cp in checkpoints:
-                    if t < cp + 0.5 and t > cp - 0.5:
+                    if t < cp + dt and t > cp - dt:
+                        plotter.show_bounds(
+                            font_family="times",
+                            xtitle="",
+                            ytitle="",
+                            ztitle="",
+                            grid=False,
+                            ticks="both",
+                            minor_ticks=True,
+                            location="outer",
+                        )
+                        plotter.add_title("")
                         plotter.save_graphic(checkpoint_file + "_" + str(cp) + ".pdf")
+                        plotter.remove_bounds_axes()
                         break
 
             # Appending the transmembrane potential value at some point to a list
-            if signal_point != None:
+            if signal_point is not None:
                 self.signal.append(
                     utils.evaluate_function_at_point(self.V_m_n, signal_point)
                 )
@@ -197,10 +228,13 @@ class BidomainModel(Common, BaseDynamicsModel):
 
     def plot_ischemia(
         self,
-        camera_direction: list[float] = [1, 1, 1],
+        camera_direction: list[float] | str | None = None,
+        function_name: str = "ischemia",
         zoom: float = 1.0,
         shadow: bool = False,
         show_mesh: bool = True,
+        show_grid: bool = True,
+        cmap: str = "RdYlGn",
         save_to: str | None = None,
     ):
         """A function that plots ischemia parts of the domain.\n
@@ -216,17 +250,26 @@ class BidomainModel(Common, BaseDynamicsModel):
         fun.x.array[cells] = np.full_like(cells, 1)
 
         utils.plot_function(
-            fun, "ischemia", camera_direction, zoom, shadow, show_mesh, save_to
+            fun,
+            function_name,
+            camera_direction,
+            zoom,
+            shadow,
+            show_mesh,
+            show_grid,
+            cmap,
+            save_to,
         )
 
     def plot_initial_V_m(
         self,
-        camera_direction: list[float] = [1, 1, 1],
+        camera_direction: list[float] | str | None = None,
         function_name: str = "initial_V_m",
         zoom: float = 1.0,
         shadow: bool = False,
         show_mesh: bool = True,
-        cmap: str = "plasma",
+        show_grid: bool = True,
+        cmap: str = "PiYG",
         save_to: str | None = None,
     ):
         """A function that plots initial transmembrane potential.\n
@@ -238,6 +281,7 @@ class BidomainModel(Common, BaseDynamicsModel):
             zoom,
             shadow,
             show_mesh,
+            show_grid,
             cmap,
             save_to,
         )
