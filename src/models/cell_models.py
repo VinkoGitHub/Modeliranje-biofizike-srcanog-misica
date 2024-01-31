@@ -1,12 +1,12 @@
-from src.models.base_models import BaseCellModel, Common
-from src.utils import RK2_step, RK3_step, RK4_step, plot_function
+from src.utils import RK2_step, RK3_step, RK4_step
+from src.models.base_models import BaseCellModel
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from dolfinx import fem, mesh
 import numpy as np
 
 
-class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
+class ReparametrizedFitzHughNagumo(BaseCellModel):
     C_m = 1.0
     a = 0.13
     b = 0.013
@@ -25,7 +25,7 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
         self.w = fem.Function(self.V1)
         self.w.x.array[:] = w_0
         self.I_app = fem.Function(self.V1)
-        self.apply_current()
+        self.applied_current()
 
     def step_V_m(
         self,
@@ -50,31 +50,6 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
         self.w.x.array[:] = RK2_step(dwdt, dt, w)
 
         return RK2_step(dVdt, dt, V)
-
-    def plot_I_app(
-        self,
-        camera_direction: list[float] | str | None = None,
-        function_name: str = "applied currrent",
-        zoom: float = 1.0,
-        shadow: bool = False,
-        show_mesh: bool = True,
-        show_grid: bool = True,
-        cmap: str = "RdBu",
-        save_to: str | None = None,
-    ):
-        """A function that plots initial applied current.\n
-        Plotting parameters can be passed."""
-        plot_function(
-            self.I_app,
-            function_name,
-            camera_direction,
-            zoom,
-            shadow,
-            show_mesh,
-            show_grid,
-            cmap,
-            save_to,
-        )
 
     def visualize(
         self,
@@ -112,7 +87,7 @@ class ReparametrizedFitzHughNagumo(Common, BaseCellModel):
         print("V=", sol.y[0][-1], ", w=", sol.y[1][-1], "at t=", time[-1])
 
 
-class Noble(Common, BaseCellModel):
+class Noble(BaseCellModel):
     C_m = 12.0
     gbar_Na = 400.0
     gbar_K2 = 1.2
@@ -131,7 +106,7 @@ class Noble(Common, BaseCellModel):
         self.n = fem.Function(self.V1)
         self.n.x.array[:] = n_0
         self.I_app = fem.Function(self.V1)
-        self.apply_current()
+        self.applied_current()
 
     def step_V_m(self, dt: float, t: float, V: np.ndarray) -> np.ndarray:
         m = self.m.x.array
@@ -179,31 +154,6 @@ class Noble(Common, BaseCellModel):
         self.n.x.array[:] = RK3_step(dndt, dt, n)
 
         return RK2_step(dVdt, dt, V)
-
-    def plot_I_app(
-        self,
-        camera_direction: list[float] | str | None = None,
-        function_name: str = "applied currrent",
-        zoom: float = 1.0,
-        shadow: bool = False,
-        show_mesh: bool = True,
-        show_grid: bool = True,
-        cmap: str = "RdBu",
-        save_to: str | None = None,
-    ):
-        """A function that plots initial applied current.\n
-        Plotting parameters can be passed."""
-        plot_function(
-            self.I_app,
-            function_name,
-            camera_direction,
-            zoom,
-            shadow,
-            show_mesh,
-            show_grid,
-            cmap,
-            save_to,
-        )
 
     def visualize(
         self,
@@ -273,7 +223,7 @@ class Noble(Common, BaseCellModel):
         )
 
 
-class BeelerReuter(Common, BaseCellModel):
+class BeelerReuter(BaseCellModel):
     C_m = 1.0
 
     def __init__(
@@ -303,7 +253,7 @@ class BeelerReuter(Common, BaseCellModel):
         self.x1 = fem.Function(self.V1)
         self.x1.x.array[:] = x_0
         self.I_app = fem.Function(self.V1)
-        self.apply_current()
+        self.applied_current()
 
     def step_V_m(self, dt: float, t: float, V: np.ndarray) -> np.ndarray:
         c = self.c.x.array
@@ -381,31 +331,6 @@ class BeelerReuter(Common, BaseCellModel):
         self.c.x.array[:] = RK4_step(dcdt, dt, c)
 
         return RK4_step(dVdt, dt, V)
-
-    def plot_I_app(
-        self,
-        camera_direction: list[float] | str | None = None,
-        function_name: str = "applied currrent",
-        zoom: float = 1.0,
-        shadow: bool = False,
-        show_mesh: bool = True,
-        show_grid: bool = True,
-        cmap: str = "RdBu",
-        save_to: str | None = None,
-    ):
-        """A function that plots initial applied current.\n
-        Plotting parameters can be passed."""
-        plot_function(
-            self.I_app,
-            function_name,
-            camera_direction,
-            zoom,
-            shadow,
-            show_mesh,
-            show_grid,
-            cmap,
-            save_to,
-        )
 
     def visualize(
         self,

@@ -10,7 +10,8 @@ import ufl
 
 
 # mesh.Mesh utilities
-def heart_ventricle(coarseness: float = 0.3) -> mesh.Mesh:
+def heart_ventricle(coarseness: float = 0.25) -> mesh.Mesh:
+    """Create a mesh of a ventricle."""
     # Initialize gmsh:
     gmsh.initialize()
     model = gmsh.model()
@@ -72,6 +73,7 @@ def heart_ventricle(coarseness: float = 0.3) -> mesh.Mesh:
 
 
 def heart_slice(coarseness: float = 0.1) -> mesh.Mesh:
+    """Create a mesh of a heart slice."""
     # Initialize gmsh:
     gmsh.initialize()
     model = gmsh.model()
@@ -183,7 +185,7 @@ def heart_slice(coarseness: float = 0.1) -> mesh.Mesh:
 
 
 def rectangle(x: float = 1, y: float = 1, Nx: int = 32, Ny: int = 32) -> mesh.Mesh:
-    """Create a unit square mesh which contains Nx points
+    """Create a rectangular mesh which contains Nx points
     in x-direction and Ny points in y-direction."""
     return mesh.create_rectangle(MPI.COMM_WORLD, [(0, 0), (x, y)], [Nx, Ny])
 
@@ -191,7 +193,7 @@ def rectangle(x: float = 1, y: float = 1, Nx: int = 32, Ny: int = 32) -> mesh.Me
 def box(
     x: float = 1, y: float = 1, z: float = 1, Nx: int = 32, Ny: int = 32, Nz: int = 32
 ) -> mesh.Mesh:
-    """Create a unit box mesh which contains Nx points
+    """Create a box mesh which contains Nx points
     in x-direction, Ny points in y-direction and Nz points in
     z-direction."""
     return mesh.create_box(MPI.COMM_WORLD, [(0, 0, 0), (x, y, z)], [Nx, Ny, Nz])
@@ -211,7 +213,23 @@ def plot_mesh(
     shadow: bool = False,
     save_to: str | None = None,
 ):
-    """Plot a dolfinx Mesh."""
+    """A function that plots a `Mesh` object from `dolfinx`.
+
+    Parameters
+    ----------
+    `domain`: mesh.Mesh
+        A mesh domain on which we plot the vector field.
+    `mesh_name`: str
+        The name of the mesh that will be displayed on the plot.
+    `camera_direction`: list[float] | str | None
+        Determines the direction of the camera.
+    `zoom`: float
+        Sets the zoom factor.
+    `shadow`: bool
+        A parameter which determines whether or not to draw shadows on the screen.
+    `save_to`: str
+        A path to the file directory where the plot will be saved in the `figures` directory.
+    """
     # Create a pyvista mesh and attach the values of u
     grid = pyvista.UnstructuredGrid(*vtk_mesh(domain))
 
@@ -225,33 +243,14 @@ def plot_mesh(
         plotter.camera_position = camera_direction
     plotter.camera.zoom(zoom)
     if save_to is not None:
-        plotter.save_graphic(save_to)
+        plotter.save_graphic(f"figures{save_to}")
     plotter.show()
 
 
 # fem.Function utilities
-def evaluate_function_at_points(
-    function: fem.Function, points: np.ndarray
-) -> np.ndarray:
-    """Takes a fem Function, mesh domain and a set of points of shape (num_points, 3)
-    and evaluates the function at each point."""
-    bb_tree = geometry.bb_tree(
-        function.function_space.mesh, function.function_space.mesh.topology.dim
-    )
-    cell_candidates = geometry.compute_collisions_points(bb_tree, points)
-    colliding_cells = geometry.compute_colliding_cells(
-        function.function_space.mesh, cell_candidates, points
-    )
-    cells = []
-    for i, _ in enumerate(points):
-        if len(colliding_cells.links(i)) > 0:
-            cells.append(colliding_cells.links(i)[0])
-    return function.eval(points, cells)
-
-
 def evaluate_function_at_point(function: fem.Function, point: list) -> float:
     point = np.array(point)
-    """Takes a fem Function, mesh domain and a point of shape (num_points, 3)
+    """Takes a `fem.Function` object and a point of shape (num_points, 3)
     and evaluates the function at the point."""
     bb_tree = geometry.bb_tree(
         function.function_space.mesh, function.function_space.mesh.topology.dim
@@ -265,16 +264,41 @@ def evaluate_function_at_point(function: fem.Function, point: list) -> float:
 
 def plot_function(
     function: fem.Function,
-    function_name: str = "function",
+    function_name: str = "",
     camera_direction: list[float] | str | None = None,
     zoom: float = 1.0,
-    shadow: bool = False,
-    show_mesh: bool = True,
+    shadow: bool = True,
+    show_mesh: bool = False,
     show_grid: bool = True,
-    cmap: str = "coolwarm",
+    cmap: str = "brg",
+    clim: list[float] | None = None,
     save_to: str | None = None,
 ):
-    """Plot a dolfinx fem Function."""
+    """A function which plots a `fem.Function` object from `dolfinx`.
+
+    Parameters
+    ----------
+    `function`: fem.Function
+        A `fem.Function` object from `dolfinx` that will be plotted.
+    `function_name`: str
+        The name of the function that will be diplayed on the plot.
+    `camera_direction`: list[float] | str | None
+        Determines the direction of the camera.
+    `zoom`: float
+        Sets the zoom factor.
+    `shadow`: bool
+        A parameter which determines whether or not to draw shadows on the screen.
+    `show_mesh`: bool
+        Boolean parameter that determines whether the mesh will be shown.
+    `show_grid`: bool
+        A parameter which determines whether or not to show the grid.
+    `cmap`: str
+        A colormap that Pyvista can interpret.
+    `clim`: list[float]
+        A list defining a lower and upper bound for the colormap.
+    `save_to`: str
+        A path to the file where the plot will be saved in the `figures` directory.
+    """
     # Create a pyvista mesh and attach the values of u
     grid = pyvista.UnstructuredGrid(*vtk_mesh(function.function_space))
     grid.point_data["function"] = function.x.array
@@ -296,11 +320,13 @@ def plot_function(
         position_x=0.85,
         position_y=0.25,
         font_family="times",
+        label_font_size=20,
     )
     plotter.add_mesh(
         grid,
         show_edges=show_mesh,
         lighting=shadow,
+        clim=clim,
         cmap=cmap,
         scalar_bar_args=sargs,
     )
@@ -321,8 +347,8 @@ def plot_function(
             location="outer",
         )
     if save_to is not None:
-        plotter.save_graphic(save_to)
-        plotter.show()
+        plotter.save_graphic(f"figures/{save_to}")
+    plotter.show()
 
 
 def plot_vector_field(
@@ -341,16 +367,26 @@ def plot_vector_field(
 
     Parameters
     ----------
-    domain: mesh.Mesh
+    `domain`: mesh.Mesh
         A mesh domain on which we plot the vector field.
-    vector_field: Callable
+    `vector_field`: Callable
         Input a function that intakes x and returns a vector field as a list.\n
     Example:
         >>> lambda x: [x[1], -x[0], 0]
-    tolerance: float
+    `tolerance`: float
         A paremeter which controls amount of plotted glyphs.
-    factor: float
+    `factor`: float
         A parameter which scales each of the glyphs by the given amount.
+    `camera_direction`: list[float] | str | None
+        Determines the direction of the camera.
+    `zoom`: float
+        Sets the zoom factor.
+    `shadow`: bool
+        A parameter which determines whether or not to draw shadows on the screen.
+    `show_grid`: bool
+        A parameter which determines whether or not to show the grid.
+    `save_to`: str
+        A path to the file where the plot will be saved  in the `figures` directory.
     """
     vector_field_new = lambda x: [
         val * (x[0] ** 2 + 1) / (x[0] ** 2 + 1) for val in vector_field(x)
@@ -390,20 +426,20 @@ def plot_vector_field(
             location="outer",
         )
     if save_to is not None:
-        plotter.save_graphic(save_to)
+        plotter.save_graphic(f"figures/{save_to}")
         plotter.show()
 
 
 # Other utilities
 def RK2_step(f: Callable, dt: float, v: np.ndarray, *args) -> np.ndarray:
-    """Napisati dokumentaciju!"""
+    """Runge-Kutta 2nd order step."""
     k1 = f(v, *args)
     k2 = f(v + dt * k1, *args)
     return v + dt / 2 * (k1 + k2)
 
 
 def RK3_step(f: Callable, dt: float, v: np.ndarray, *args) -> np.ndarray:
-    """Napisati dokumentaciju!"""
+    """Runge-Kutta 3rd order step."""
     k1 = f(v, *args)
     k2 = f(v + dt / 2 * k1, *args)
     k3 = f(v - dt * k1 + 2 * dt * k2, *args)
@@ -411,7 +447,7 @@ def RK3_step(f: Callable, dt: float, v: np.ndarray, *args) -> np.ndarray:
 
 
 def RK4_step(f: Callable, dt: float, v: np.ndarray, *args) -> np.ndarray:
-    """Napisati dokumentaciju!"""
+    """Runge-Kutta 4th order step."""
     k1 = f(v, *args)
     k2 = f(v + dt / 2 * k1, *args)
     k3 = f(v + dt / 2 * k2, *args)

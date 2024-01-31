@@ -1,7 +1,7 @@
 from dolfinx.fem.petsc import LinearProblem
 from src.models.base_models import *
-import matplotlib.pyplot as plt
 from dolfinx import fem, plot, mesh
+import matplotlib.pyplot as plt
 import src.utils as utils
 from tqdm import tqdm
 import numpy as np
@@ -22,7 +22,7 @@ sigma_et = 1.65  # mS/cm
 sigma_en = 1.3514  # mS/cm
 
 
-class BidomainModel(Common, BaseDynamicsModel):
+class BidomainModel(BaseDynamicsModel):
     """A model that solves bidomain equations to simulate
     electric impulse conduction in heart."""
 
@@ -54,19 +54,8 @@ class BidomainModel(Common, BaseDynamicsModel):
         # Define conductivity tensors
         self.conductivity()
 
-        # Ishemic conductivities
-        if self.ischemia() is not None:
-            self.M_i = ufl.conditional(
-                self.ischemia()[0](self.x),
-                self.M_i / self.ischemia()[1],
-                self.M_i,
-            )
-
-            self.M_e = ufl.conditional(
-                self.ischemia()[0](self.x),
-                self.M_e / self.ischemia()[2],
-                self.M_e,
-            )
+        # Apply ischemic conductivities
+        self.ischemia()
 
     def solve(
         self,
@@ -75,9 +64,9 @@ class BidomainModel(Common, BaseDynamicsModel):
         signal_point: list[float] | None = None,
         camera_direction: str | None = None,
         zoom: float = 1.0,
-        cmap: str = "jet",
-        save_to: str = "V_m.gif",
-        checkpoints: list[int] = [],
+        cmap: str = "turbo",
+        save_to: str = "V_m.mp4",
+        checkpoints: list[float] = [],
         checkpoint_file: str = "checkpoint",
     ):
         self.solve.__doc__
@@ -119,9 +108,9 @@ class BidomainModel(Common, BaseDynamicsModel):
             sparser = round(steps / 900)
 
         if save_to[-4:] == ".gif":
-            plotter.open_gif("animations/" + save_to, loop=steps, fps=fps)
+            plotter.open_gif(f"animations/{save_to}", loop=steps, fps=fps)
         elif save_to[-4:] == ".mp4":
-            plotter.open_movie("animations/" + save_to, framerate=fps)
+            plotter.open_movie(f"animations/{save_to}", framerate=fps)
 
         # Writing a first frame
         grid.point_data["V_m"] = self.V_m_n.x.array
@@ -132,6 +121,7 @@ class BidomainModel(Common, BaseDynamicsModel):
             position_x=0.85,
             position_y=0.25,
             font_family="times",
+            label_font_size=20,
         )
         plotter.add_mesh(
             grid,
@@ -175,22 +165,22 @@ class BidomainModel(Common, BaseDynamicsModel):
                 plotter.add_title("t = %.3f" % t, font_size=24, font="times")
                 plotter.write_frame()
 
-                for cp in checkpoints:
-                    if t < cp + dt and t > cp - dt:
-                        plotter.show_bounds(
-                            font_family="times",
-                            xtitle="",
-                            ytitle="",
-                            ztitle="",
-                            grid=False,
-                            ticks="both",
-                            minor_ticks=True,
-                            location="outer",
-                        )
-                        plotter.add_title("")
-                        plotter.save_graphic(checkpoint_file + "_" + str(cp) + ".pdf")
-                        plotter.remove_bounds_axes()
-                        break
+            for cp in checkpoints:
+                if t <= cp + dt and t >= cp - dt:
+                    plotter.show_bounds(
+                        font_family="times",
+                        xtitle="",
+                        ytitle="",
+                        ztitle="",
+                        grid=False,
+                        ticks="both",
+                        minor_ticks=True,
+                        location="outer",
+                    )
+                    plotter.add_title("")
+                    plotter.save_graphic(f"figures/{checkpoint_file}_{cp}.pdf")
+                    plotter.remove_bounds_axes()
+                    break
 
             # Appending the transmembrane potential value at some point to a list
             if signal_point is not None:
@@ -226,81 +216,8 @@ class BidomainModel(Common, BaseDynamicsModel):
         self.M_i = self.SIGMA_IT * ufl.Identity(self.d)
         self.M_e = self.SIGMA_ET * ufl.Identity(self.d)
 
-    def plot_ischemia(
-        self,
-        camera_direction: list[float] | str | None = None,
-        function_name: str = "ischemia",
-        zoom: float = 1.0,
-        shadow: bool = False,
-        show_mesh: bool = True,
-        show_grid: bool = True,
-        cmap: str = "RdYlGn",
-        save_to: str | None = None,
-    ):
-        """A function that plots ischemia parts of the domain.\n
-        Plotting parameters can be passed."""
 
-        if self.ischemia() is None:
-            raise NotImplementedError("Ischemia function not implemented!")
-
-        fun = fem.Function(self.V1)
-        cells = fem.locate_dofs_geometrical(self.V1, self.ischemia()[0])
-
-        fun.x.array[:] = 0
-        fun.x.array[cells] = np.full_like(cells, 1)
-
-        utils.plot_function(
-            fun,
-            function_name,
-            camera_direction,
-            zoom,
-            shadow,
-            show_mesh,
-            show_grid,
-            cmap,
-            save_to,
-        )
-
-    def plot_initial_V_m(
-        self,
-        camera_direction: list[float] | str | None = None,
-        function_name: str = "initial_V_m",
-        zoom: float = 1.0,
-        shadow: bool = False,
-        show_mesh: bool = True,
-        show_grid: bool = True,
-        cmap: str = "PiYG",
-        save_to: str | None = None,
-    ):
-        """A function that plots initial transmembrane potential.\n
-        Plotting parameters can be passed."""
-        utils.plot_function(
-            self.V_m_n,
-            function_name,
-            camera_direction,
-            zoom,
-            shadow,
-            show_mesh,
-            show_grid,
-            cmap,
-            save_to,
-        )
-
-    def plot_signal(self, save_to: str | None = None):
-        """A function that plots transmembrane potential at a point
-        previously defined as signal point.\n
-        Plotting parameters can be passed."""
-        if self.signal_point == None:
-            raise ValueError("Signal point must be specified when solving the model.")
-
-        plt.plot(self.time, self.signal)
-        plt.xlabel("$t$ [ms]")
-        plt.ylabel("$V_m$ [mV]")
-        if save_to is not None:
-            plt.savefig(save_to)
-
-
-class MonodomainModel(Common, BaseDynamicsModel):
+class MonodomainModel(BaseDynamicsModel):
     """A model that solves monodomain equations to simulate
     electric impulse conduction in heart."""
 
@@ -427,61 +344,3 @@ class MonodomainModel(Common, BaseDynamicsModel):
     def conductivity(self):
         self.conductivity.__doc__
         self.M_i = self.SIGMA_IL * ufl.Identity(self.d)
-
-    def plot_ischemia(
-        self,
-        camera_direction: list[float] = [1, 1, 1],
-        zoom: float = 1.0,
-        shadow: bool = False,
-        show_mesh: bool = True,
-        save_to: str | None = None,
-    ):
-        """A function that plots ischemia parts of the domain.\n
-        Plotting parameters can be passed."""
-
-        if self.ischemia() is None:
-            raise NotImplementedError("Ischemia function not implemented!")
-
-        fun = fem.Function(self.V1)
-        cells = fem.locate_dofs_geometrical(self.V1, self.ischemia()[0])
-
-        fun.x.array[:] = 0
-        fun.x.array[cells] = np.full_like(cells, 1)
-
-        utils.plot_function(
-            fun, "ischemia", camera_direction, zoom, shadow, show_mesh, save_to
-        )
-
-    def plot_initial_V_m(
-        self,
-        camera_direction: list[float] = [1, 1, 1],
-        zoom: float = 1.0,
-        shadow: bool = False,
-        show_mesh: bool = True,
-        save_to: str | None = None,
-    ):
-        """A function that plots initial transmembrane potential.\n
-        Plotting parameters can be passed."""
-        utils.plot_function(
-            self.V_m_n,
-            "initial V_m",
-            camera_direction,
-            zoom,
-            shadow,
-            show_mesh,
-            save_to,
-        )
-
-    def plot_signal(self, *args):
-        """A function that plots transmembrane potential at a point
-        previously defined as signal point.\n
-        Plotting parameters can be passed."""
-        if self.signal_point == None:
-            raise ValueError("Signal point must be specified when solving the model.")
-
-        plt.plot(self.time, self.signal)
-        plt.xlabel("time [ms]")
-        plt.ylabel("signal [mV]")
-        plt.title(
-            "Time dependence of $V_m$ at " + str(self.signal_point),
-        )
