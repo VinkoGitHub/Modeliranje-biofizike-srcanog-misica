@@ -1,7 +1,6 @@
 from dolfinx.fem.petsc import LinearProblem
-from src.models.base_models import *
 from dolfinx import fem, plot, mesh
-import matplotlib.pyplot as plt
+from src.base_models import *
 import src.utils as utils
 from tqdm import tqdm
 import numpy as np
@@ -64,7 +63,7 @@ class BidomainModel(BaseDynamicsModel):
         signal_point: list[float] | None = None,
         camera_direction: str | None = None,
         zoom: float = 1.0,
-        cmap: str = "turbo",
+        cmap: str = "jet",
         save_to: str = "V_m.mp4",
         checkpoints: list[float] = [],
         checkpoint_file: str = "checkpoint",
@@ -246,22 +245,21 @@ class MonodomainModel(BaseDynamicsModel):
         # Define conductivity tensors
         self.conductivity()
 
-        # Ishemic conductivities
-        if self.ischemia() is not None:
-            self.M_i = ufl.conditional(
-                self.ischemia()[0](self.x),
-                self.ischemia()[1],
-                self.M_i,
-            )
+        # Apply ischemic conductivities
+        self.ischemia()
 
     def solve(
         self,
         T: float,
         steps: int,
         lambda_: float,
+        camera_direction: str | None = None,
         signal_point: list[float] | None = None,
-        camera: list[float] | None = None,
-        save_to: str = "V_m.gif",
+        zoom: float = 1.0,
+        cmap: str = "jet",
+        save_to: str = "V_m.mp4",
+        checkpoints: list[float] = [],
+        checkpoint_file: str = "checkpoint",
     ):
         self.solve.__doc__
 
@@ -279,17 +277,47 @@ class MonodomainModel(BaseDynamicsModel):
         grid = pyvista.UnstructuredGrid(*plot.vtk_mesh(self.V1))
         plotter = pyvista.Plotter(notebook=True, off_screen=False)
 
-        if steps < 600:
+        if steps <= 600:
             fps = int(steps / 10)
             sparser = 1
         else:
             fps = 60
-            sparser = int(steps / 900)
+            sparser = round(steps / 900)
 
         if save_to[-4:] == ".gif":
-            plotter.open_gif("animations/" + save_to, loop=steps, fps=fps)
+            plotter.open_gif(f"animations/{save_to}", loop=steps, fps=fps)
         elif save_to[-4:] == ".mp4":
-            plotter.open_movie("animations/" + save_to, framerate=fps)
+            plotter.open_movie(f"animations/{save_to}", framerate=fps)
+
+        # Writing a first frame
+        grid.point_data["V_m"] = self.V_m_n.x.array
+        sargs = dict(
+            title="",
+            height=0.5,
+            vertical=True,
+            position_x=0.85,
+            position_y=0.25,
+            font_family="times",
+            label_font_size=20,
+        )
+        plotter.add_mesh(
+            grid,
+            show_edges=False,
+            lighting=True,
+            smooth_shading=True,
+            clim=[-100, 50],
+            cmap=cmap,
+            scalar_bar_args=sargs,
+        )
+        plotter.add_title("t = 0.000", font_size=24, font="times")
+
+        if type(camera_direction) == list:
+            plotter.view_vector(camera_direction)
+        elif type(camera_direction) == str:
+            plotter.camera_position = camera_direction
+
+        plotter.camera.zoom(zoom)
+        plotter.write_frame()
 
         # List of signal values for each time step
         self.signal_point = signal_point
@@ -301,23 +329,38 @@ class MonodomainModel(BaseDynamicsModel):
         for t in tqdm(self.time, desc="Solving problem"):
             # Update plot
             if iteration_number % sparser == 0:
-                grid.point_data["V_m"] = self.V_m_n.x.array[:]
+                grid.point_data["V_m"] = self.V_m_n.x.array
                 plotter.add_mesh(
                     grid,
                     show_edges=False,
                     lighting=True,
                     smooth_shading=True,
                     clim=[-100, 50],
-                    cmap="plasma",
+                    cmap=cmap,
+                    scalar_bar_args=sargs,
                 )
-                plotter.add_title("t = %.3f" % t, font_size=24)
-                if camera != None:
-                    plotter.view_vector([1, -1, -1])
+                plotter.add_title("t = %.3f" % t, font_size=24, font="times")
                 plotter.write_frame()
-                # plotter.clear()
+
+            for cp in checkpoints:
+                if t <= cp + dt and t >= cp - dt:
+                    plotter.show_bounds(
+                        font_family="times",
+                        xtitle="",
+                        ytitle="",
+                        ztitle="",
+                        grid=False,
+                        ticks="both",
+                        minor_ticks=True,
+                        location="outer",
+                    )
+                    plotter.add_title("")
+                    plotter.save_graphic(f"figures/{checkpoint_file}_{cp}.pdf")
+                    plotter.remove_bounds_axes()
+                    break
 
             # Appending the transmembrane potential value at some point to a list
-            if signal_point != None:
+            if signal_point is not None:
                 self.signal.append(
                     utils.evaluate_function_at_point(self.V_m_n, signal_point)
                 )

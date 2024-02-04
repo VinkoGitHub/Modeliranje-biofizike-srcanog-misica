@@ -1,5 +1,5 @@
 from src.utils import RK2_step, RK3_step, RK4_step
-from src.models.base_models import BaseCellModel
+from src.base_models import BaseCellModel
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from dolfinx import fem, mesh

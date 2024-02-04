@@ -4,8 +4,8 @@ from dolfinx.io import gmshio
 from typing import Callable
 from mpi4py import MPI
 import numpy as np
-import gmsh
 import pyvista
+import gmsh
 import ufl
 
 
@@ -272,6 +272,7 @@ def plot_function(
     show_grid: bool = True,
     cmap: str = "brg",
     clim: list[float] | None = None,
+    points: list[list[float]] | None = None,
     save_to: str | None = None,
 ):
     """A function which plots a `fem.Function` object from `dolfinx`.
@@ -296,6 +297,8 @@ def plot_function(
         A colormap that Pyvista can interpret.
     `clim`: list[float]
         A list defining a lower and upper bound for the colormap.
+    `points`: list[float]
+        A list of points to add to a plot.
     `save_to`: str
         A path to the file where the plot will be saved in the `figures` directory.
     """
@@ -330,6 +333,13 @@ def plot_function(
         cmap=cmap,
         scalar_bar_args=sargs,
     )
+    if points is not None:
+        plotter.add_points(
+            np.array(points),
+            color="silver",
+            point_size=10,
+            render_points_as_spheres=True,
+        )
     if type(camera_direction) == list:
         plotter.view_vector(camera_direction)
     elif type(camera_direction) == str:

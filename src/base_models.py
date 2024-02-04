@@ -133,8 +133,9 @@ class BaseDynamicsModel(Common, ABC):
             A set of time points for which plots will be saved.
         `checkpoint_file`: str
             A file path which is a blueprint for saving a checkpoints in the `figures` directory.
-            Checkpoint value will be appended to a checkpoint_file name.
-
+            Checkpoint value will be appended to a checkpoint_file name.\n
+        Additionally, for the `monodomain` solver, parameter `lambda_` should be passed in.
+        It represents proportionality constant between the intracellular and extracellular conductivities.
         """
         pass
 
