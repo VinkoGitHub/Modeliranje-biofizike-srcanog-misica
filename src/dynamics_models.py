@@ -120,7 +120,7 @@ class BidomainModel(BaseDynamicsModel):
             position_x=0.85,
             position_y=0.25,
             font_family="times",
-            label_font_size=20,
+            label_font_size=40,
         )
         plotter.add_mesh(
             grid,
@@ -166,6 +166,7 @@ class BidomainModel(BaseDynamicsModel):
 
             for cp in checkpoints:
                 if t <= cp + dt and t >= cp - dt:
+                    plotter.add_title("")
                     plotter.show_bounds(
                         font_family="times",
                         xtitle="",
@@ -175,8 +176,9 @@ class BidomainModel(BaseDynamicsModel):
                         ticks="both",
                         minor_ticks=True,
                         location="outer",
+                        font_size=25,
+                        use_2d=self.d == 2,
                     )
-                    plotter.add_title("")
                     plotter.save_graphic(f"figures/{checkpoint_file}_{cp}.pdf")
                     plotter.remove_bounds_axes()
                     break
@@ -298,7 +300,7 @@ class MonodomainModel(BaseDynamicsModel):
             position_x=0.85,
             position_y=0.25,
             font_family="times",
-            label_font_size=20,
+            label_font_size=40,
         )
         plotter.add_mesh(
             grid,
@@ -344,6 +346,7 @@ class MonodomainModel(BaseDynamicsModel):
 
             for cp in checkpoints:
                 if t <= cp + dt and t >= cp - dt:
+                    plotter.add_title("")
                     plotter.show_bounds(
                         font_family="times",
                         xtitle="",
@@ -353,8 +356,9 @@ class MonodomainModel(BaseDynamicsModel):
                         ticks="both",
                         minor_ticks=True,
                         location="outer",
+                        font_size=25,
+                        use_2d=self.d == 2,
                     )
-                    plotter.add_title("")
                     plotter.save_graphic(f"figures/{checkpoint_file}_{cp}.pdf")
                     plotter.remove_bounds_axes()
                     break

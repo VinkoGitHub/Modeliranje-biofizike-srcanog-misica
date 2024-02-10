@@ -323,7 +323,7 @@ def plot_function(
         position_x=0.85,
         position_y=0.25,
         font_family="times",
-        label_font_size=20,
+        label_font_size=40,
     )
     plotter.add_mesh(
         grid,
@@ -355,6 +355,8 @@ def plot_function(
             ticks="both",
             minor_ticks=True,
             location="outer",
+            font_size=25,
+            use_2d=function.function_space.mesh.topology.dim == 2,
         )
     if save_to is not None:
         plotter.save_graphic(f"figures/{save_to}")
@@ -434,6 +436,8 @@ def plot_vector_field(
             ticks="both",
             minor_ticks=True,
             location="outer",
+            font_size=25,
+            use_2d=domain.topology.dim == 2,
         )
     if save_to is not None:
         plotter.save_graphic(f"figures/{save_to}")

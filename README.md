@@ -3,6 +3,7 @@
 Diploma thesis
 
 ### Solver workflow:
+
  1. Define a domain mesh - ``utils.create_mesh`` or ``utils.import_mesh`` can be used.\
  Then ``ufl.SpatialCoordinate(domain)`` can be defined if it will be used.
 
@@ -17,3 +18,11 @@ Diploma thesis
  4. In the end, run a ``solve`` method of a model with its parameters. You can access the solutions as attributes of the model.
 
  Demo solver can be found in the `solve` directory.
+
+
+### Presentation:
+
+To run the presentation in a web browser run following commands in the terminal:
+
+- `export PYTHONPATH=.`
+- `streamlit run presentation/🎓_Modeliranje_biofizike_srčanog_tkiva.py`
