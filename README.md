@@ -1,6 +1,7 @@
-## Modelling biophysics of a heart tissue
+## Modelling biophysics of a heart muscle
 ### Vinko Dragušica
-Diploma thesis
+
+This repository is part of my diploma thesis and it is a supplementary material for it. It contains the code for solving the bidomain and monodomain equation and the presentation which contains the information about the solvers and their theoretical background.
 
 ### Solver workflow:
 
@@ -22,7 +23,7 @@ Diploma thesis
 
 ### Presentation:
 
-To run the presentation in a web browser run following commands in the terminal:
+To run the presentation in a web browser run following commands in the terminal from the directory `/Modeliranje-biofizike-srcanog-misica`:
 
 - `export PYTHONPATH=.`
 - `streamlit run presentation/🎓_Modeliranje_biofizike_srčanog_tkiva.py`
