@@ -9,7 +9,7 @@ st.set_page_config(
 )
 
 # Title
-st.title("Matematika")
+st.title("Matematički model")
 
 # Body
 st.divider()
@@ -21,7 +21,7 @@ bullet(
 )
 st.divider()
 centered_image(
-    "presentation/data/bidomain-cells.png",
+    "presentation/data/figures/bidomain-cells.png",
     width=4,
     caption="https://carmen.gitlabpages.inria.fr/ceps/volumeFraction.html",
 )
@@ -34,12 +34,108 @@ bullet(
     "Rascjepni kanali",
     "Maxwellova jednadžba",
 )
-latex_equation(r'\nabla\times\bm{E} = -\frac{\partial\bm{B}}{\partial t}')
+latex_equation(r"\nabla\times\bm{E} = -\frac{\partial\bm{B}}{\partial t}")
 st.divider()
-bullet('Kvazistacionarnost')
-latex_equation(r'\nabla\times\bm{E} = 0 \quad\Rightarrow\quad \bm{E} = -\nabla U')
-latex_equation(r'\bm{J} = M\bm{E} \quad\Rightarrow\quad \bm{J} = -M\nabla U')
+bullet("Kvazistacionarnost")
+latex_equation(r"\nabla\times\bm{E} = 0 \quad\Rightarrow\quad \bm{E} = -\nabla U")
+latex_equation(r"\bm{J} = M\bm{E} \quad\Rightarrow\quad \bm{J} = -M\nabla U")
 st.divider()
-bullet('Intracelularni potencijal', 'Ekstracelularni potencijal')
-latex_equation(r'U_i,\quad U_e,\quad V_m \coloneqq U_i - U_e')
+bullet("Intracelularni potencijal", "Ekstracelularni potencijal")
+latex_equation(r"U_i,\quad U_e,\quad V_m \coloneqq U_i - U_e")
 st.divider()
+latex_equation(r"\bm{J_i} = -M_i\nabla U_i")
+latex_equation(r"\bm{J_e} = -M_e\nabla U_e")
+st.divider()
+bullet("Naboj se ne skuplja u točki")
+latex_equation(r"\frac{\partial}{\partial t}(q_i+q_e) = 0")
+st.divider()
+bullet("Jednadžba kontinuiteta")
+latex_equation(r"\nabla\cdot\bm{J_i} + \frac{\partial q_i}{\partial t} = -\chi I_{ion}")
+latex_equation(r"\nabla\cdot\bm{J_e} + \frac{\partial q_e}{\partial t} = \chi I_{ion},")
+st.divider()
+bullet("Očuvanje struje")
+latex_equation(r"\nabla\cdot(\bm{J_i} + \bm{J_e}) = 0")
+bullet("Prva jednadžba modela")
+latex_equation(r"    \nabla\cdot(M_i\nabla U_i + M_e\nabla U_e) = 0")
+st.divider()
+bullet("Kapacitet")
+latex_equation(r"q = \chi C_m V_m")
+latex_equation(r"q \coloneqq \frac{q_i - q_e}{2}")
+st.divider()
+latex_equation(
+    r"\chi C_m \frac{\partial V_m}{\partial t} = \frac{1}{2}\frac{\partial(q_i-q_e)}{\partial t}"
+)
+latex_equation(
+    r"\frac{\partial q_i}{\partial t}= -\frac{\partial q_e}{\partial t} = \chi C_m \frac{\partial V_m}{\partial t}"
+)
+st.divider()
+bullet("Druga jednadžba modela")
+latex_equation(
+    r"\nabla\cdot (M_i\nabla U_i) = \chi C_m \frac{\partial V_m}{\partial t} +\chi I_{ion}"
+)
+st.divider()
+latex_equation(
+    r"\nabla\cdot (M_i\nabla(V_m + U_e)) = \chi C_m \frac{\partial V_m}{\partial t} +\chi I_{ion}"
+)
+latex_equation(r"\nabla\cdot(M_i\nabla V_m + (M_i + M_e)\nabla U_e) = 0")
+st.divider()
+bullet("Rubni uvjeti")
+latex_equation(r"\bm{\hat{n}}\cdot\bm{J_i} = 0")
+latex_equation(r"\bm{\hat{n}}\cdot\bm{J_e} = 0")
+latex_equation(r"\bm{\hat{n}}\cdot (M_i\nabla(V_m + U_e)) = 0")
+latex_equation(r"\bm{\hat{n}}\cdot (M_e\nabla U_e) = 0")
+st.divider()
+bullet("Proširenje modela na torzo", "Generalizirana  Laplaceova jednadžba")
+latex_equation(r"-\nabla\cdot(M_T\nabla V_T) = 0")
+bullet("Rubni uvjet")
+latex_equation(r"\bm{\hat{n}_0}\cdot(M_T\nabla V_T) = 0")
+st.divider()
+centered_image("presentation/data/figures/torso.jpg", width=2, caption="caption")
+st.divider()
+bullet("Vodljivost", "Srčana vlakna i snopovi")
+centered_image("presentation/data/figures/vlakna.jpg", width=2, caption="caption")
+st.divider()
+latex_equation(
+    r"M_{ij} = a_{i,l} a_{j,l} \sigma^l + a_{i,t} a_{j,t} \sigma^t + a_{i,n} a_{j,n} \sigma^n"
+)
+latex_equation(
+    r"M_i = \sigma^t_i \cdot \mathbb{1} + (\sigma^l_i - \sigma^t_i) \cdot\bm{a_l}\otimes\bm{a_l}+ (\sigma^n_i - \sigma^t_i) \cdot\bm{a_n}\otimes\bm{a_n}"
+)
+latex_equation(
+    r"M_e = \sigma^t_e \cdot \mathbb{1} + (\sigma^l_e - \sigma^t_e) \cdot\bm{a_l}\otimes\bm{a_l}+ (\sigma^n_e - \sigma^t_e) \cdot\bm{a_n}\otimes\bm{a_n}"
+)
+st.divider()
+bullet("Dvodomenski model")
+latex_equation(
+    r"""\begin{aligned}
+  \nabla\cdot (M^*_i\nabla(V_m + U_e)) = \frac{\partial V_m}{\partial t} + I^*_{ion},  \qquad \forall \bm{x}\in \mathbb{H}\nonumber\\
+  \nabla\cdot(M^*_i\nabla V_m + (M^*_i + M^*_e)\nabla U_e) = 0,  \qquad \forall \bm{x}\in \mathbb{H}\nonumber\\
+  \bm{n}\cdot M^*_i\nabla(V_m + U_e) = 0,  \qquad \forall \bm{x}\in \partial\mathbb{H} \nonumber\\
+  \bm{n}\cdot (M^*_e\nabla U_e) = 0,  \qquad \forall \bm{x}\in \partial\mathbb{H} \nonumber
+\end{aligned}"""
+)
+bullet("Skalirane vrijednosti")
+latex_equation(
+    r"M^*_i \coloneqq \frac{M_i}{\chi C_m},\quad M^*_i \coloneqq \frac{M_i}{\chi C_m},\quad I^*_{ion} \coloneqq \frac{I_{ion}}{C_m}"
+)
+st.divider()
+bullet("Jednodomenska aproksimacija", "Proporcionalnost vodljivosti")
+latex_equation(r"M_e = \lambda M_i")
+latex_equation(
+    r"\nabla\cdot (M_i\nabla(V_m + U_e)) = \chi C_m \frac{\partial V_m}{\partial t} +\chi I_{ion}"
+)
+latex_equation(r"\nabla\cdot(M_i\nabla V_m + (1 + \lambda)M_i\nabla U_e) = 0")
+st.divider()
+bullet("Rubni uvjeti")
+latex_equation(r"\bm{\hat{n}}\cdot (M_i\nabla(V_m + U_e)) = 0")
+latex_equation(r"\bm{\hat{n}}\cdot(\lambda M_i\nabla U_e) = 0")
+st.divider()
+bullet("Jednodomenski model")
+latex_equation(
+    r"""\begin{aligned}
+  \nabla\cdot (M^*\nabla V_m) = \frac{\partial V_m}{\partial t} +  I^*_{ion},  \qquad \forall \bm{x}\in \mathbb{H}\\
+  \bm{\hat{n}}\cdot (M^*\nabla V_m) = 0,  \qquad \forall \bm{x}\in \partial\mathbb{H}
+\end{aligned}"""
+)
+bullet('Skalirane vrijednosti')
+latex_equation(r'M^* \coloneqq \frac{\lambda}{1+\lambda} \frac{M_i}{\chi C_m}\text{,\quad}I^*_{ion} \coloneqq \frac{I_{ion}}{C_m}')
