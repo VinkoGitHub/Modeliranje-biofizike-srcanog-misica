@@ -34,11 +34,12 @@ class BaseCellModel(ABC, Common):
 
         Example:
         ----------
-        >>> def apply_current(self,):
+        >>> def applied_current(self,):
         >>>     locator = lambda x: (x[0] - 1) ** 2 < 0.1**2
         >>>     cells = fem.locate_dofs_geometrical(self.V1, locator)
         >>>     self.I_app.x.array[cells] = np.full_like(cells, 10)
         >>>     self.I_app_duration = 20
+        >>>     self.I_app_time = 10
         >>>
         >>>     return self.I_app
         """
