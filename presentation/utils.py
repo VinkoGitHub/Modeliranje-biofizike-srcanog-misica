@@ -7,13 +7,19 @@ def HTML(link: str, height: int = 600):
     st.components.v1.html(source_code, height=height)
 
 
-def video(link: str):
+def video(link: str, relative_path: bool = True):
+    if relative_path:
+        link = f'animations/{link}'
     video_file = open(link, "rb")
     video_bytes = video_file.read()
     st.video(video_bytes)
 
 
-def centered_image(link: str, width: int = 1, caption: str | None = None):
+def centered_image(
+    link: str, width: float = 1, caption: str | None = None, relative_path: bool = True
+):
+    if relative_path:
+        link = f"presentation/data/figures/{link}"
     col1, col2, col3 = st.columns([1, width, 1])
     with col1:
         st.text("")
@@ -21,6 +27,72 @@ def centered_image(link: str, width: int = 1, caption: str | None = None):
         st.image(link, use_column_width=True, caption=caption)
     with col3:
         st.text("")
+
+
+def double_image(
+    link_1: str,
+    link_2: str,
+    width_1: float = 2,
+    width_2: float = 2,
+    caption_1: str | None = None,
+    caption_2: str | None = None,
+    relative_path: bool = True,
+):
+    if relative_path:
+        link_1 = f"presentation/data/figures/{link_1}"
+        link_2 = f"presentation/data/figures/{link_2}"
+    col1, col2, col3 = st.columns([width_1, 1, width_2])
+    with col1:
+        st.image(
+            link_1,
+            use_column_width=True,
+            caption=caption_1,
+        )
+    with col2:
+        st.text("")
+    with col3:
+        st.image(
+            link_2,
+            use_column_width=True,
+            caption=caption_2,
+        )
+
+
+def triple_image(
+    link_1: str,
+    link_2: str,
+    link_3: str,
+    width_1: float = 1,
+    width_2: float = 1,
+    width_3: float = 1,
+    caption_1: str | None = None,
+    caption_2: str | None = None,
+    caption_3: str | None = None,
+    relative_path: bool = True,
+):
+    if relative_path:
+        link_1 = f"presentation/data/figures/{link_1}"
+        link_2 = f"presentation/data/figures/{link_2}"
+        link_3 = f"presentation/data/figures/{link_3}"
+    col1, col2, col3 = st.columns([width_1, width_2, width_3])
+    with col1:
+        st.image(
+            link_1,
+            use_column_width=True,
+            caption=caption_1,
+        )
+    with col2:
+        st.image(
+            link_2,
+            use_column_width=True,
+            caption=caption_2,
+        )
+    with col3:
+        st.image(
+            link_3,
+            use_column_width=True,
+            caption=caption_3,
+        )
 
 
 def image(link: str, width: int | None = None, caption: str | None = None):
