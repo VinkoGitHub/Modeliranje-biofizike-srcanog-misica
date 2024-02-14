@@ -9,9 +9,11 @@ st.set_page_config(
 )
 
 # Title
-st.title("Uvod")
-
-bullet("Diskretizacija vremenskog intervala")
+st.title("Numerički model")
+st.divider()
+# Body
+st.subheader("Diskretizacija vremenskog intervala")
+st.divider()
 latex_equation(
     r"[0,T]\rightarrow[0,\, \Delta t\,, 2\Delta t\,, ...\,, T-\Delta t\,, T]"
 )
@@ -35,10 +37,9 @@ latex_equation(
 )
 bullet("Crank-Nicolson, Runge-Kutta")
 st.divider()
-bullet("Diskretizacija prostorne domene", "Metoda konačnih elemenata")
-centered_image(
-    "presentation/data/figures/nestrukturirana_mreza.jpg", width=2, caption="caption"
-)
+st.subheader("Diskretizacija prostorne domene", "Metoda konačnih elemenata")
+st.divider()
+centered_image("nestrukturirana_mreza.jpg", "caption", 0.7)
 st.divider()
 bullet("Diskretizacija Crank-Nicolson metodom")
 latex_equation(
@@ -48,7 +49,9 @@ latex_equation(
     r"0 = \nabla\cdot \left(M_i\nabla\left( \frac{V_m^{n+1}+V_m^n}{2}\right) + \nabla\cdot ((M_i+M_e)\nabla U_e\right)"
 )
 st.divider()
-bullet("Slaba/varijacijska forma", "Testne funkcije")
+st.subheader("Slaba/varijacijska forma")
+st.divider()
+bullet("Testne funkcije")
 latex_equation(
     r"\int_\mathbb{H}\frac{V_m^{n+1}-V_m^n}{\Delta t}\phi\,\mathrm{d}V = \int_\mathbb{H}\nabla\cdot \left(M_i\nabla\left(\frac{V_m^{n+1}+V_m^n}{2} + U_e\right)\right)\phi\,\mathrm{d}V,  \qquad \forall \phi\in V"
 )
@@ -85,12 +88,14 @@ latex_equation(
 bullet("Ekstracelularni potencijal")
 latex_equation(r"\int_\mathbb{H}U_e\,\mathrm{d}V= 0")
 st.divider()
-bullet("Jednodomenski model", "Crank-Nicolsonova metoda")
+st.subheader("Jednodomenski model")
+st.divider()
+bullet("Crank-Nicolsonova metoda")
 latex_equation(
     r"\frac{V_m^{n+1}-V_m^n}{\Delta t} = \frac{\lambda}{\lambda + 1}\nabla\cdot M_i\nabla\left(\frac{V_m^{n+1}+V_m^n}{2}\right)"
 )
 st.divider()
 bullet("Slaba forma")
 latex_equation(
-    r"\int_\mathbb{H}\frac{V_m^{n+1}-V_m^n}{\Delta t}\phi\,\mathrm{d}V + \int_\mathbb{H} \frac{\lambda}{\lambda + 1}M_i\nabla\left(\frac{V_m^{n+1}+V_m^n}{2}\right)\cdot\nabla\phi\,\mathrm{d}V = 0, \qquad \forall \phi\in V."
+    r"\int_\mathbb{H}\frac{V_m^{n+1}-V_m^n}{\Delta t}\phi\,\mathrm{d}V + \int_\mathbb{H} \frac{\lambda}{\lambda + 1}M_i\nabla\left(\frac{V_m^{n+1}+V_m^n}{2}\right)\cdot\nabla\phi\,\mathrm{d}V = 0, \qquad \forall \phi\in V"
 )

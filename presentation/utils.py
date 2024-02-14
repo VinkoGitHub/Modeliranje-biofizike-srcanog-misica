@@ -1,22 +1,49 @@
 import streamlit as st
 
 
-def HTML(link: str, height: int = 600):
-    HtmlFile = open(link, "r", encoding="utf-8")
-    source_code = HtmlFile.read()
-    st.components.v1.html(source_code, height=height)
-
-
-def video(link: str, relative_path: bool = True):
+def double_HTML(
+    link_1: str,
+    link_2: str,
+    height_1: float = 600,
+    height_2: float = 600,
+    separation: float = 1,
+    relative_path: bool = True,
+):
     if relative_path:
-        link = f'animations/{link}'
+        link_1 = f"presentation/data/html/{link_1}"
+        link_2 = f"presentation/data/html/{link_2}"
+    HtmlFile_1 = open(link_1, "r", encoding="utf-8")
+    HtmlFile_2 = open(link_2, "r", encoding="utf-8")
+    source_code_1 = HtmlFile_1.read()
+    source_code_2 = HtmlFile_2.read()
+    col1, col2, col3 = st.columns([1, separation, 1])
+    with col1:
+        st.components.v1.html(source_code_1, height=height_1)
+    with col2:
+        st.text("")
+    with col3:
+        st.components.v1.html(source_code_2, height=height_2)
+
+
+def video(link: str, width: float = 2.5, relative_path: bool = True):
+    if relative_path:
+        link = f"animations/{link}"
     video_file = open(link, "rb")
     video_bytes = video_file.read()
-    st.video(video_bytes)
+    col1, col2, col3 = st.columns([1, width, 1])
+    with col1:
+        st.text("")
+    with col2:
+        st.video(video_bytes)
+    with col3:
+        st.text("")
 
 
 def centered_image(
-    link: str, width: float = 1, caption: str | None = None, relative_path: bool = True
+    link: str,
+    caption: str | None = None,
+    width: float = 2.5,
+    relative_path: bool = True,
 ):
     if relative_path:
         link = f"presentation/data/figures/{link}"
@@ -32,10 +59,10 @@ def centered_image(
 def double_image(
     link_1: str,
     link_2: str,
-    width_1: float = 2,
-    width_2: float = 2,
     caption_1: str | None = None,
     caption_2: str | None = None,
+    width_1: float = 5,
+    width_2: float = 5,
     relative_path: bool = True,
 ):
     if relative_path:

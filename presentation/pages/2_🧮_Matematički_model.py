@@ -10,21 +10,22 @@ st.set_page_config(
 
 # Title
 st.title("Matematički model")
+st.divider()
 
 # Body
-st.divider()
 bullet(
     "1 do 10 milijardi stanica<sup>[cite]</sup>",
     "Homogenizacija<sup>[cite]</sup>",
-    "Dvodomenski model",
     "Usrednjene veličine",
 )
 st.divider()
 centered_image(
-    "presentation/data/figures/bidomain-cells.png",
+    "bidomain-cells.png",
     width=4,
     caption="https://carmen.gitlabpages.inria.fr/ceps/volumeFraction.html",
 )
+st.divider()
+st.header("Dvodomenski model")
 st.divider()
 latex_equation(r"\bar{f}\rightarrow f,\quad \mathbb{H},\quad \mathbb{\partial H}")
 st.divider()
@@ -90,10 +91,12 @@ latex_equation(r"-\nabla\cdot(M_T\nabla V_T) = 0")
 bullet("Rubni uvjet")
 latex_equation(r"\bm{\hat{n}_0}\cdot(M_T\nabla V_T) = 0")
 st.divider()
-centered_image("presentation/data/figures/torso.jpg", width=2, caption="caption")
+centered_image("torso.jpg", width=2, caption="caption")
 st.divider()
-bullet("Vodljivost", "Srčana vlakna i snopovi")
-centered_image("presentation/data/figures/vlakna.jpg", width=2, caption="caption")
+st.subheader("Vodljivost")
+st.divider()
+bullet("Srčana vlakna i snopovi")
+centered_image("vlakna.jpg", width=2, caption="caption")
 st.divider()
 latex_equation(
     r"M_{ij} = a_{i,l} a_{j,l} \sigma^l + a_{i,t} a_{j,t} \sigma^t + a_{i,n} a_{j,n} \sigma^n"
@@ -105,7 +108,7 @@ latex_equation(
     r"M_e = \sigma^t_e \cdot \mathbb{1} + (\sigma^l_e - \sigma^t_e) \cdot\bm{a_l}\otimes\bm{a_l}+ (\sigma^n_e - \sigma^t_e) \cdot\bm{a_n}\otimes\bm{a_n}"
 )
 st.divider()
-bullet("Dvodomenski model")
+bullet("Skalirani dvodomenski model")
 latex_equation(
     r"""\begin{aligned}
   \nabla\cdot (M^*_i\nabla(V_m + U_e)) = \frac{\partial V_m}{\partial t} + I^*_{ion},  \qquad \forall \bm{x}\in \mathbb{H}\nonumber\\
@@ -119,6 +122,8 @@ latex_equation(
     r"M^*_i \coloneqq \frac{M_i}{\chi C_m},\quad M^*_i \coloneqq \frac{M_i}{\chi C_m},\quad I^*_{ion} \coloneqq \frac{I_{ion}}{C_m}"
 )
 st.divider()
+st.subheader('Jednodomenski model')
+st.divider()
 bullet("Jednodomenska aproksimacija", "Proporcionalnost vodljivosti")
 latex_equation(r"M_e = \lambda M_i")
 latex_equation(
@@ -130,12 +135,14 @@ bullet("Rubni uvjeti")
 latex_equation(r"\bm{\hat{n}}\cdot (M_i\nabla(V_m + U_e)) = 0")
 latex_equation(r"\bm{\hat{n}}\cdot(\lambda M_i\nabla U_e) = 0")
 st.divider()
-bullet("Jednodomenski model")
+bullet("Skalirani jednodomenski model")
 latex_equation(
     r"""\begin{aligned}
   \nabla\cdot (M^*\nabla V_m) = \frac{\partial V_m}{\partial t} +  I^*_{ion},  \qquad \forall \bm{x}\in \mathbb{H}\\
   \bm{\hat{n}}\cdot (M^*\nabla V_m) = 0,  \qquad \forall \bm{x}\in \partial\mathbb{H}
 \end{aligned}"""
 )
-bullet('Skalirane vrijednosti')
-latex_equation(r'M^* \coloneqq \frac{\lambda}{1+\lambda} \frac{M_i}{\chi C_m}\text{,\quad}I^*_{ion} \coloneqq \frac{I_{ion}}{C_m}')
+bullet("Skalirane vrijednosti")
+latex_equation(
+    r"M^* \coloneqq \frac{\lambda}{1+\lambda} \frac{M_i}{\chi C_m}\text{,\quad}I^*_{ion} \coloneqq \frac{I_{ion}}{C_m}"
+)
