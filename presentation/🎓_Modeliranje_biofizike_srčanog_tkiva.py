@@ -17,7 +17,7 @@ st.markdown(
 st.divider()
 st.markdown(
     """<h3 style='text-align: center; color: white;'>Vinko Dragušica</h3>
-    <h3 style='text-align: center; color: white;'>Mentor: dr.sc. Andrej Novak</h3>""",
+    <h5 style='text-align: center; color: white;'>Mentor: doc.dr.sc. Andrej Novak</h5>""",
     unsafe_allow_html=True,
 )
 st.divider()
@@ -25,7 +25,7 @@ st.markdown("#\n\n")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.image("presentation/data/PMF.png", use_column_width=True)
+    st.image("presentation/data/figures/PMF.png", use_column_width=True)
 
 with col2:
     st.markdown("#\n#")
@@ -40,4 +40,4 @@ with col2:
         unsafe_allow_html=True,
     )
 with col3:
-    st.image("presentation/data/UNIZG.png", use_column_width=True)
+    st.image("presentation/data/figures/UNIZG.png", use_column_width=True)

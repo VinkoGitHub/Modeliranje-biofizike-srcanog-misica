@@ -1,8 +1,10 @@
-## Modelling biophysics of a heart tissue
+## Modelling biophysics of a heart muscle
 ### Vinko Dragušica
-Diploma thesis
+
+This repository is part of my diploma thesis and it is a supplementary material for it. It contains the code for solving the bidomain and monodomain equation and the presentation which contains the information about the solvers and their theoretical background.
 
 ### Solver workflow:
+
  1. Define a domain mesh - ``utils.create_mesh`` or ``utils.import_mesh`` can be used.\
  Then ``ufl.SpatialCoordinate(domain)`` can be defined if it will be used.
 
@@ -17,3 +19,11 @@ Diploma thesis
  4. In the end, run a ``solve`` method of a model with its parameters. You can access the solutions as attributes of the model.
 
  Demo solver can be found in the `solve` directory.
+
+
+### Presentation:
+
+To run the presentation in a web browser run following commands in the terminal from the directory `/Modeliranje-biofizike-srcanog-misica`:
+
+- `export PYTHONPATH=.`
+- `streamlit run presentation/🎓_Modeliranje_biofizike_srčanog_tkiva.py`

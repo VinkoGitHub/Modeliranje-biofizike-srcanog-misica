@@ -20,7 +20,7 @@ bullet(
     "Ishemije srca - primaran uzrok smrti 2019. godine<sup>[WHO-statistika]</sup>",
 )
 st.divider()
-centered_image("presentation/data/slika_srca.png", width=2, caption="caption")
+centered_image("provodni-sustav.jpg", width=1.5, caption="caption")
 st.divider()
 bullet(
     "Elektrokardiogram - EKG",
@@ -29,12 +29,12 @@ bullet(
     "12 odvoda",
 )
 st.divider()
-centered_image("presentation/data/EKG-slika.jpg", width=5, caption="caption")
+centered_image("EKG-slika.jpg", width=5, caption="caption")
 st.divider()
 bullet("Akcijski potencijal", "Polarizacija", "Depolarizacija", "Repolarizacija")
 st.divider()
 centered_image(
-    "presentation/data/akcijski-potencijal-slika.jpg", width=5, caption="caption"
+    "akcijski-potencijal-slika.jpg", width=5, caption="caption"
 )
 st.divider()
 bullet(
@@ -44,4 +44,4 @@ bullet(
     "Domena kao mreža (mesh)",
 )
 st.divider()
-centered_image("presentation/data/akcijski_potencijali.jpg", width=4, caption="caption")
+centered_image("akcijski_potencijali.jpg", width=4, caption="caption")
