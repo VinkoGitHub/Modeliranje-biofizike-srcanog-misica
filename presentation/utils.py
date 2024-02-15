@@ -13,7 +13,7 @@ def video(link: str):
     st.video(video_bytes)
 
 
-def centered_image(link: str, width: int = 1, caption: str | None = None):
+def centered_image(link: str, caption: str | None = None, width: int = 1.5):
     col1, col2, col3 = st.columns([1, width, 1])
     with col1:
         st.text("")
