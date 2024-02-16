@@ -14,27 +14,36 @@ st.title("Uvod")
 # Body
 st.divider()
 bullet(
-    "2.5 milijardi otkucaja<sup>[Sundnes]</sup>",
-    "200 000 tona krvi<sup>[Sundnes]</sup>",
-    "160 000 kilometara<sup>[Sundnes]</sup>",
-    "Ishemije srca - primaran uzrok smrti 2019. godine<sup>[WHO-statistika]</sup>",
+    "2.5 milijardi otkucaja<sup>[1]</sup>",
+    "200 000 tona krvi<sup>[1]</sup>",
+    "160 000 kilometara<sup>[1]</sup>",
+    "Ishemije srca - primaran uzrok smrti 2019. godine<sup>[2]</sup>",
 )
 st.divider()
-centered_image("provodni-sustav.jpg", width=1.5, caption="caption")
+centered_image(
+    "provodni-sustav.jpg", "Provodni sustav srčanog mišića (preuzeto iz [3])."
+)
 st.divider()
 bullet(
     "Elektrokardiogram - EKG",
     "W. Einthoven - 1901. godine",
     "Nobelova nagrada",
-    "12 odvoda",
+    "10 elektroda i 12 odvoda",
 )
 st.divider()
-centered_image("EKG-slika.jpg", width=5, caption="caption")
+centered_image(
+    "EKG-slika.jpg",
+    "Primjer elektrokardiograma (preuzeto iz [4]).",
+    4,
+)
 st.divider()
 bullet("Akcijski potencijal", "Polarizacija", "Depolarizacija", "Repolarizacija")
 st.divider()
 centered_image(
-    "akcijski-potencijal-slika.jpg", width=5, caption="caption"
+    "akcijski-potencijal-slika.jpg",
+    """Lijevo: izmjereni akcijski potencijal.
+    Desno: modelirani akcijski potencijal(preuzeto iz [5]).""",
+    4,
 )
 st.divider()
 bullet(
@@ -44,4 +53,12 @@ bullet(
     "Domena kao mreža (mesh)",
 )
 st.divider()
-centered_image("akcijski_potencijali.jpg", width=4, caption="caption")
+centered_image(
+    "akcijski_potencijali.jpg",
+    width=4,
+    caption="Ilustracija akcijskih potencijala pojedinih dijelova srčanog mišića (preuzeto iz [6]).",
+)
+st.divider()
+st.subheader("Kardiomiocit")
+st.divider()
+video("presentation/data/cardiomyocite.mp4", caption='Promjene na kardiomiocitu uslijed djelovanja akcijskog potencijala (preuzeto iz [7]).', relative_path=False)

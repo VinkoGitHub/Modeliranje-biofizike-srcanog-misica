@@ -14,15 +14,15 @@ st.divider()
 
 # Body
 bullet(
-    "1 do 10 milijardi stanica<sup>[cite]</sup>",
-    "Homogenizacija<sup>[cite]</sup>",
+    "1 do 10 milijardi stanica<sup>[8]</sup>",
+    "Homogenizacija",
     "Usrednjene veličine",
 )
 st.divider()
 centered_image(
     "bidomain-cells.png",
     width=4,
-    caption="https://carmen.gitlabpages.inria.fr/ceps/volumeFraction.html",
+    caption="Ilustracija intracelularne i ekstracelularne domene(preuzeto iz [8]).",
 )
 st.divider()
 st.header("Dvodomenski model")
@@ -91,12 +91,12 @@ latex_equation(r"-\nabla\cdot(M_T\nabla V_T) = 0")
 bullet("Rubni uvjet")
 latex_equation(r"\bm{\hat{n}_0}\cdot(M_T\nabla V_T) = 0")
 st.divider()
-centered_image("torso.jpg", width=2, caption="caption")
+centered_image("torso.jpg", width=2, caption="Primjer domene srca i torza. Torzo je prikazan plavom bojom, a srce crvenom.")
 st.divider()
 st.subheader("Vodljivost")
 st.divider()
 bullet("Srčana vlakna i snopovi")
-centered_image("vlakna.jpg", width=2, caption="caption")
+centered_image("vlakna.jpg", width=2, caption="Slika srčanih vlakana pod mikroskopom (preuzeto iz [9]).")
 st.divider()
 latex_equation(
     r"M_{ij} = a_{i,l} a_{j,l} \sigma^l + a_{i,t} a_{j,t} \sigma^t + a_{i,n} a_{j,n} \sigma^n"

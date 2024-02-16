@@ -25,7 +25,12 @@ def double_HTML(
         st.components.v1.html(source_code_2, height=height_2)
 
 
-def video(link: str, width: float = 2.5, relative_path: bool = True):
+def video(
+    link: str,
+    width: float = 2.5,
+    caption: str | None = None,
+    relative_path: bool = True,
+):
     if relative_path:
         link = f"animations/{link}"
     video_file = open(link, "rb")
@@ -35,6 +40,12 @@ def video(link: str, width: float = 2.5, relative_path: bool = True):
         st.text("")
     with col2:
         st.video(video_bytes)
+        if caption is not None:
+            st.caption(
+                f"<center>{caption}</center>",
+                unsafe_allow_html=True,
+            )
+
     with col3:
         st.text("")
 
@@ -42,8 +53,8 @@ def video(link: str, width: float = 2.5, relative_path: bool = True):
 def centered_image(
     link: str,
     caption: str | None = None,
-    width: float = 2.5,
     relative_path: bool = True,
+    width: float = 2.5,
 ):
     if relative_path:
         link = f"presentation/data/figures/{link}"
