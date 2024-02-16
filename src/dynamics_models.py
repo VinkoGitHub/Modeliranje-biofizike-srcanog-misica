@@ -254,7 +254,7 @@ class MonodomainModel(BaseDynamicsModel):
         self,
         T: float,
         steps: int,
-        lambda_: float,
+        lambda_: float = 0.8,
         camera_direction: str | None = None,
         signal_point: list[float] | None = None,
         zoom: float = 1.0,
