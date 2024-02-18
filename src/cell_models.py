@@ -25,7 +25,6 @@ class ReparametrizedFitzHughNagumo(BaseCellModel):
         self.w = fem.Function(self.V1)
         self.w.x.array[:] = w_0
         self.I_app = fem.Function(self.V1)
-        self.applied_current()
 
     def step_V_m(
         self,
@@ -34,8 +33,8 @@ class ReparametrizedFitzHughNagumo(BaseCellModel):
         V: np.ndarray,
     ) -> np.ndarray:
         w = self.w.x.array
-        I_app = self.I_app.x.array
 
+        self.applied_current(t)
         dVdt = lambda V: (
             self.c1
             / self.V_AMP**2
@@ -43,8 +42,7 @@ class ReparametrizedFitzHughNagumo(BaseCellModel):
             * (V - self.V_TH)
             * (self.V_PEAK - V)
             - self.c2 / self.V_AMP * (V - self.V_REST) * w
-            + I_app
-            * np.exp(-(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10))
+            + self.I_app.x.array
         )
         dwdt = lambda w: self.b * (V - self.V_REST - self.c3 * w)
         self.w.x.array[:] = RK2_step(dwdt, dt, w)
@@ -106,28 +104,24 @@ class Noble(BaseCellModel):
         self.n = fem.Function(self.V1)
         self.n.x.array[:] = n_0
         self.I_app = fem.Function(self.V1)
-        self.applied_current()
 
     def step_V_m(self, dt: float, t: float, V: np.ndarray) -> np.ndarray:
         m = self.m.x.array
         h = self.h.x.array
         n = self.n.x.array
-        I_app = self.I_app.x.array
 
         self.g_K1 = 1.2 * np.exp(-(V + 90) / 50) + 0.015 * np.exp((V + 90) / 60)
         self.g_K2 = self.gbar_K2 * n**4
         self.g_Na = self.gbar_Na * m**3 * h + self.g_i
 
+        self.applied_current(t)
         dVdt = lambda V: (
             -1
             / self.C_m
             * (
                 self.g_Na * (V - self.v_Na)
                 + (self.g_K1 + self.g_K2) * (V - self.v_K)
-                - I_app
-                * np.exp(
-                    -(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10)
-                )
+                - self.I_app.x.array
             )
         )
 
@@ -253,7 +247,6 @@ class BeelerReuter(BaseCellModel):
         self.x1 = fem.Function(self.V1)
         self.x1.x.array[:] = x_0
         self.I_app = fem.Function(self.V1)
-        self.applied_current()
 
     def step_V_m(self, dt: float, t: float, V: np.ndarray) -> np.ndarray:
         c = self.c.x.array
@@ -263,7 +256,6 @@ class BeelerReuter(BaseCellModel):
         d = self.d.x.array
         f = self.f.x.array
         x1 = self.x1.x.array
-        I_app = self.I_app.x.array
 
         I_K1 = 0.35 * (
             4
@@ -275,19 +267,9 @@ class BeelerReuter(BaseCellModel):
         I_Na = (4 * m**3 * h * j + 0.003) * (V - 50)
         I_Ca = 0.09 * d * f * (V - 127.698 + 13.0287 * np.log(c))
 
+        self.applied_current(t)
         dVdt = (
-            lambda V: -1
-            / self.C_m
-            * (
-                I_K1
-                + I_x1
-                + I_Na
-                + I_Ca
-                - I_app
-                * np.exp(
-                    -(((t - self.I_app_time) / self.I_app_duration) ** 2) * np.log(10)
-                )
-            )
+            lambda V: -1 / self.C_m * (I_K1 + I_x1 + I_Na + I_Ca - self.I_app.x.array)
         )
 
         dcdt = lambda c: 0.07 * (1 - c) - I_Ca
@@ -441,3 +423,61 @@ class BeelerReuter(BaseCellModel):
             "x=",
             sol.y[7][-1],
         )
+
+
+class AlievPanfilov(BaseCellModel):
+    A = 10
+    a = 0.075
+    eps = 0.04
+
+    def __init__(self, domain, w_0: float = 0.0):
+        super().__init__(domain)
+        self.w = fem.Function(self.V1)
+        self.w.x.array[:] = w_0
+        self.I_app = fem.Function(self.V1)
+
+    def step_V_m(
+        self,
+        dt: float,
+        t: float,
+        V: np.ndarray,
+    ) -> np.ndarray:
+        w = self.w.x.array
+
+        self.applied_current(t)
+        dVdt = lambda V: self.A * V(V - self.a) * (V - 1) + V * w + self.I_app.x.array
+        dwdt = lambda w: self.eps * (self.A * V * (V - 1 - self.a) + w)
+        self.w.x.array[:] = RK2_step(dwdt, dt, w)
+
+        return RK2_step(dVdt, dt, V)
+
+    def visualize(
+        self,
+        T: float,
+        I_app_value: float,
+        I_app_time: float,
+        I_app_duration: float,
+        V_0: float,
+        w_0: float,
+    ):
+        def fun(t, z):
+            V, w = z
+            dVdt = (
+                self.A * V(V - self.a) * (V - 1)
+                + V * w
+                + I_app_value
+                * np.exp(-(((t - I_app_time) / I_app_duration) ** 2) * np.log(10))
+            )
+            dwdt = self.eps * (self.A * V * (V - 1 - self.a) + w)
+            return [dVdt, dwdt]
+
+        time = np.linspace(0, T, 1000)
+        sol = solve_ivp(fun, [0, T], [V_0, w_0], method="DOP853", t_eval=time)
+
+        plt.plot(sol.t, sol.y[0], color="firebrick")
+        plt.xlabel("$t$")
+        plt.ylabel("$V_m$")
+        # plt.title("Action potential")
+        plt.savefig("figures/AP_actionpotential.pdf")
+        plt.show()
+        print("V=", sol.y[0][-1], ", w=", sol.y[1][-1], "at t=", time[-1])

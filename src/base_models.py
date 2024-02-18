@@ -21,26 +21,22 @@ class Common:
 
 
 class BaseCellModel(ABC, Common):
-    I_app_time = 10
-    I_app_duration = 1
-
-    def applied_current(self) -> fem.Function | None:
+    def applied_current(self, t: float) -> fem.Function | None:
         """
         Default value of applied current is 0. In this function you can define
-        the position of applying a current by modifying `I_app` as a function.
-        Also, you can change the duration of the stimulation by changinig
-        the `self.I_app_duration` parameter. Model can return a `fem.Function` object
-        that can be plotted using the `utils.plot_function` function.
+        the position of applying a current by modifying `self.I_app` as a function.
+        Function input is time point value and function before every time step.
+        Model output can be plotted using the `utils.plot_function` function.
 
         Example:
         ----------
-        >>> def applied_current(self,):
+        >>> def applied_current(self, t: float):
         >>>     locator = lambda x: (x[0] - 1) ** 2 < 0.1**2
         >>>     cells = fem.locate_dofs_geometrical(self.V1, locator)
-        >>>     self.I_app.x.array[cells] = np.full_like(cells, 10)
-        >>>     self.I_app_duration = 20
-        >>>     self.I_app_time = 10
-        >>>
+        >>>     if 0 < t < 3:
+        >>>         self.I_app.x.array[cells] = np.full_like(cells, 10)
+        >>>     else:
+        >>>         self.I_app.x.array[:] = 0
         >>>     return self.I_app
         """
 
