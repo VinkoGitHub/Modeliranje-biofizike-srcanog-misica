@@ -14,7 +14,7 @@ st.divider()
 
 # Body
 bullet(
-    "FEM mreže",
+    "Python, dolfinx, FEM mreže",
     "Pravokutna domena - 2352 elementa",
     "Domena presjeka srčanog mišića - 6760 elemenata",
     "Domena lijeve klijetke - 19781 element",

@@ -39,7 +39,11 @@ bullet("Crank-Nicolson, Runge-Kutta")
 st.divider()
 st.subheader("Diskretizacija prostorne domene", "Metoda konačnih elemenata")
 st.divider()
-centered_image("nestrukturirana_mreza.jpg", "Nestrukturirana mreža srčanog mišića (preuzeto iz [10]).", 0.7)
+centered_image(
+    "nestrukturirana_mreza.jpg",
+    "Nestrukturirana mreža srčanog mišića (preuzeto iz [10]).",
+    width=0.7,
+)
 st.divider()
 bullet("Diskretizacija Crank-Nicolson metodom")
 latex_equation(

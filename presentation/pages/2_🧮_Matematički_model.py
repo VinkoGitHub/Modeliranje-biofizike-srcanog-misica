@@ -27,7 +27,9 @@ centered_image(
 st.divider()
 st.header("Dvodomenski model")
 st.divider()
-latex_equation(r"\bar{f}\rightarrow f,\quad \mathbb{H},\quad \mathbb{\partial H}")
+latex_equation(
+    r"\bar{f}(\bm{x},t)\rightarrow f(\bm{x},t),\quad \mathbb{H},\quad \mathbb{\partial H}"
+)
 st.divider()
 bullet(
     "Intracelularna domena",
@@ -35,24 +37,34 @@ bullet(
     "Rascjepni kanali",
     "Maxwellova jednadžba",
 )
-latex_equation(r"\nabla\times\bm{E} = -\frac{\partial\bm{B}}{\partial t}")
+latex_equation(
+    r"\nabla\times\bm{E}(\bm{x},t) = -\frac{\partial\bm{B}(\bm{x},t)}{\partial t}"
+)
 st.divider()
 bullet("Kvazistacionarnost")
-latex_equation(r"\nabla\times\bm{E} = 0 \quad\Rightarrow\quad \bm{E} = -\nabla U")
-latex_equation(r"\bm{J} = M\bm{E} \quad\Rightarrow\quad \bm{J} = -M\nabla U")
+latex_equation(r"\nabla\times\bm{E}(\bm{x},t) = 0 \quad\Rightarrow\quad \bm{E}(\bm{x},t) = -\nabla U(\bm{x},t)")
+latex_equation(
+    r"\bm{J}(\bm{x},t) = M(\bm{x},t)\bm{E}(\bm{x},t) \quad\Rightarrow\quad \bm{J}(\bm{x},t) = -M(\bm{x},t)\nabla U(\bm{x},t)"
+)
 st.divider()
 bullet("Intracelularni potencijal", "Ekstracelularni potencijal")
-latex_equation(r"U_i,\quad U_e,\quad V_m \coloneqq U_i - U_e")
+latex_equation(
+    r"U_i,\quad U_e,\quad V_m \coloneqq U_i - U_e"
+)
 st.divider()
 latex_equation(r"\bm{J_i} = -M_i\nabla U_i")
 latex_equation(r"\bm{J_e} = -M_e\nabla U_e")
 st.divider()
 bullet("Naboj se ne skuplja u točki")
-latex_equation(r"\frac{\partial}{\partial t}(q_i+q_e) = 0")
+latex_equation(r"\frac{\partial}{\partial t}(q_i(\bm{x},t)+q_e(\bm{x},t)) = 0")
 st.divider()
 bullet("Jednadžba kontinuiteta")
-latex_equation(r"\nabla\cdot\bm{J_i} + \frac{\partial q_i}{\partial t} = -\chi I_{ion}")
-latex_equation(r"\nabla\cdot\bm{J_e} + \frac{\partial q_e}{\partial t} = \chi I_{ion},")
+latex_equation(
+    r"\nabla\cdot\bm{J_i} + \frac{\partial q_i}{\partial t} = -\chi I_{ion}(\bm{x},t)"
+)
+latex_equation(
+    r"\nabla\cdot\bm{J_e} + \frac{\partial q_e}{\partial t} = \chi I_{ion}(\bm{x},t),"
+)
 st.divider()
 bullet("Očuvanje struje")
 latex_equation(r"\nabla\cdot(\bm{J_i} + \bm{J_e}) = 0")
@@ -81,22 +93,28 @@ latex_equation(
 latex_equation(r"\nabla\cdot(M_i\nabla V_m + (M_i + M_e)\nabla U_e) = 0")
 st.divider()
 bullet("Rubni uvjeti")
-latex_equation(r"\bm{\hat{n}}\cdot\bm{J_i} = 0")
-latex_equation(r"\bm{\hat{n}}\cdot\bm{J_e} = 0")
-latex_equation(r"\bm{\hat{n}}\cdot (M_i\nabla(V_m + U_e)) = 0")
-latex_equation(r"\bm{\hat{n}}\cdot (M_e\nabla U_e) = 0")
+latex_equation(r"\bm{\hat{n}}\cdot\bm{J_i} = 0 \Rightarrow  \bm{\hat{n}}\cdot (M_i\nabla(V_m + U_e)) = 0")
+latex_equation(r"\bm{\hat{n}}\cdot\bm{J_e} = 0 \Rightarrow \bm{\hat{n}}\cdot (M_e\nabla U_e) = 0")
 st.divider()
 bullet("Proširenje modela na torzo", "Generalizirana  Laplaceova jednadžba")
 latex_equation(r"-\nabla\cdot(M_T\nabla V_T) = 0")
 bullet("Rubni uvjet")
 latex_equation(r"\bm{\hat{n}_0}\cdot(M_T\nabla V_T) = 0")
 st.divider()
-centered_image("torso.jpg", width=2, caption="Primjer domene srca i torza. Torzo je prikazan plavom bojom, a srce crvenom.")
+centered_image(
+    "torso.jpg",
+    width=2,
+    caption="Primjer domene srca i torza. Torzo je prikazan plavom bojom, a srce crvenom.",
+)
 st.divider()
 st.subheader("Vodljivost")
 st.divider()
 bullet("Srčana vlakna i snopovi")
-centered_image("vlakna.jpg", width=2, caption="Slika srčanih vlakana pod mikroskopom (preuzeto iz [9]).")
+centered_image(
+    "vlakna.jpg",
+    width=2,
+    caption="Slika srčanih vlakana pod mikroskopom (preuzeto iz [9]).",
+)
 st.divider()
 latex_equation(
     r"M_{ij} = a_{i,l} a_{j,l} \sigma^l + a_{i,t} a_{j,t} \sigma^t + a_{i,n} a_{j,n} \sigma^n"
@@ -122,7 +140,7 @@ latex_equation(
     r"M^*_i \coloneqq \frac{M_i}{\chi C_m},\quad M^*_i \coloneqq \frac{M_i}{\chi C_m},\quad I^*_{ion} \coloneqq \frac{I_{ion}}{C_m}"
 )
 st.divider()
-st.subheader('Jednodomenski model')
+st.subheader("Jednodomenski model")
 st.divider()
 bullet("Jednodomenska aproksimacija", "Proporcionalnost vodljivosti")
 latex_equation(r"M_e = \lambda M_i")

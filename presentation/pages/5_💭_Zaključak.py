@@ -13,4 +13,10 @@ st.title("Zaključak")
 st.divider()
 
 # Body
-bullet('abc')
+bullet(
+    "Dvodomenski i jednodomenski model rješivi su numerički",
+    "Dvodomenski model daje smislene rezultate za više ionskih modela",
+    "Dvodomenski model može simulirati ožiljno tkivo",
+    "Jednodomenski model dobra je aproksimacija dvodomenskog modela",
+    "Dvodomenski model dobra je početna osnova za simulacije propagacije srčanih signala",
+)

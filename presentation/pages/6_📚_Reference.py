@@ -29,13 +29,13 @@ st.text(
     conduction-system, 11.2.2024."""
 )
 st.text(
-    """[4] Gheith, Z.; Alqam, B.; Jagana, R. A Rare Case of Pulmonary 
-    Emboli Presenting With ST Elevation on ECG. // Cureus. 
-    Vol. 14, 9 (2022)"""
+    """[4] Biasi, N.; Tognetti, A. A computationally efficient dynamic 
+    model of human epicardial tissue. // Plos one. Vol. 16 10 (2021)"""
 )
 st.text(
-    """[5] Biasi, N.; Tognetti, A. A computationally efficient dynamic 
-    model of human epicardial tissue. // Plos one. Vol. 16 10 (2021)"""
+    """[5] Gheith, Z.; Alqam, B.; Jagana, R. A Rare Case of Pulmonary 
+    Emboli Presenting With ST Elevation on ECG. // Cureus. 
+    Vol. 14, 9 (2022)"""
 )
 st.text(
     """[6] Cardiac Arrhythmias, Textbook of Cardilogy, https://www.

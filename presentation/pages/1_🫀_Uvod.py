@@ -17,11 +17,25 @@ bullet(
     "2.5 milijardi otkucaja<sup>[1]</sup>",
     "200 000 tona krvi<sup>[1]</sup>",
     "160 000 kilometara<sup>[1]</sup>",
-    "Ishemije srca - primaran uzrok smrti 2019. godine<sup>[2]</sup>",
+    "Ishemijske bolesti srca - primaran uzrok smrti 2019. godine<sup>[2]</sup>",
 )
 st.divider()
 centered_image(
     "provodni-sustav.jpg", "Provodni sustav srčanog mišića (preuzeto iz [3])."
+)
+st.divider()
+bullet(
+    "Akcijski potencijal",
+    "Natrijevi i kalijevi kanali",
+    "Depolarizacija",
+    "Repolarizacija",
+)
+st.divider()
+centered_image(
+    "akcijski-potencijal-slika.jpg",
+    """Lijevo: izmjereni akcijski potencijal.
+    Desno: modelirani akcijski potencijal(preuzeto iz [4]).""",
+    4,
 )
 st.divider()
 bullet(
@@ -33,23 +47,14 @@ bullet(
 st.divider()
 centered_image(
     "EKG-slika.jpg",
-    "Primjer elektrokardiograma (preuzeto iz [4]).",
-    4,
-)
-st.divider()
-bullet("Akcijski potencijal", "Polarizacija", "Depolarizacija", "Repolarizacija")
-st.divider()
-centered_image(
-    "akcijski-potencijal-slika.jpg",
-    """Lijevo: izmjereni akcijski potencijal.
-    Desno: modelirani akcijski potencijal(preuzeto iz [5]).""",
+    "Primjer elektrokardiograma (preuzeto iz [5]).",
     4,
 )
 st.divider()
 bullet(
-    "[forward problem of electrocardilogy]",
+    "Problem matematičke elektrofiziologije",
     "Ionski modeli (Hodgkin-Huxley, FitzHugh-Nagumo, Noble, Beeler-Reuter, ...)",
-    "Model dinamike (pasivni vodič, jednodomenski, dvodomensi, ...)",
+    "Model dinamike (pasivni vodič, jednodomenski, dvodomenski, ...)",
     "Domena kao mreža (mesh)",
 )
 st.divider()
@@ -61,4 +66,8 @@ centered_image(
 st.divider()
 st.subheader("Kardiomiocit")
 st.divider()
-video("presentation/data/cardiomyocite.mp4", caption='Promjene na kardiomiocitu uslijed djelovanja akcijskog potencijala (preuzeto iz [7]).', relative_path=False)
+video(
+    "presentation/data/cardiomyocite.mp4",
+    caption="Promjene na kardiomiocitu uslijed djelovanja akcijskog potencijala (preuzeto iz [7]).",
+    relative_path=False,
+)
