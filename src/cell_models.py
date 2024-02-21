@@ -429,6 +429,7 @@ class AlievPanfilov(BaseCellModel):
     A = 10
     a = 0.075
     eps = 0.04
+    C_m = 1.0
 
     def __init__(self, domain, w_0: float = 0.0):
         super().__init__(domain)
@@ -445,11 +446,13 @@ class AlievPanfilov(BaseCellModel):
         w = self.w.x.array
 
         self.applied_current(t)
-        dVdt = lambda V: self.A * V(V - self.a) * (V - 1) + V * w + self.I_app.x.array
-        dwdt = lambda w: self.eps * (self.A * V * (V - 1 - self.a) + w)
-        self.w.x.array[:] = RK2_step(dwdt, dt, w)
+        dVdt = (
+            lambda V: -self.A * V * (V - self.a) * (V - 1) - V * w + self.I_app.x.array
+        )
+        dwdt = lambda w: -self.eps * (self.A * V * (V - 1 - self.a) + w)
+        self.w.x.array[:] = RK4_step(dwdt, dt, w)
 
-        return RK2_step(dVdt, dt, V)
+        return RK4_step(dVdt, dt, V)
 
     def visualize(
         self,
@@ -463,18 +466,17 @@ class AlievPanfilov(BaseCellModel):
         def fun(t, z):
             V, w = z
             dVdt = (
-                self.A * V(V - self.a) * (V - 1)
-                + V * w
-                + I_app_value
-                * np.exp(-(((t - I_app_time) / I_app_duration) ** 2) * np.log(10))
+                -self.A * V * (V - self.a) * (V - 1) - V * w
+            ) + I_app_value * np.exp(
+                -(((t - I_app_time) / I_app_duration) ** 2) * np.log(10)
             )
-            dwdt = self.eps * (self.A * V * (V - 1 - self.a) + w)
+            dwdt = -self.eps * (self.A * V * (V - 1 - self.a) + w)
             return [dVdt, dwdt]
 
         time = np.linspace(0, T, 1000)
-        sol = solve_ivp(fun, [0, T], [V_0, w_0], method="DOP853", t_eval=time)
+        sol = solve_ivp(fun, [0, T], [V_0, w_0], method="RK45", t_eval=time)
 
-        plt.plot(sol.t, sol.y[0], color="firebrick")
+        plt.plot(sol.t, sol.y[0], color="darkorange")
         plt.xlabel("$t$")
         plt.ylabel("$V_m$")
         # plt.title("Action potential")

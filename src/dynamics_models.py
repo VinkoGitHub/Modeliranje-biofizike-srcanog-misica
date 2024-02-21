@@ -259,6 +259,7 @@ class MonodomainModel(BaseDynamicsModel):
         signal_point: list[float] | None = None,
         zoom: float = 1.0,
         cmap: str = "jet",
+        clim: list[float] = [-100, 50],
         save_to: str = "V_m.mp4",
         checkpoints: list[float] = [],
         checkpoint_file: str = "checkpoint",
@@ -307,7 +308,7 @@ class MonodomainModel(BaseDynamicsModel):
             show_edges=False,
             lighting=True,
             smooth_shading=True,
-            clim=[-100, 50],
+            clim=clim,
             cmap=cmap,
             scalar_bar_args=sargs,
         )
@@ -337,7 +338,7 @@ class MonodomainModel(BaseDynamicsModel):
                     show_edges=False,
                     lighting=True,
                     smooth_shading=True,
-                    clim=[-100, 50],
+                    clim=clim,
                     cmap=cmap,
                     scalar_bar_args=sargs,
                 )

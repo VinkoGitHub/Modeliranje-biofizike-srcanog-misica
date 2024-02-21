@@ -273,6 +273,7 @@ def plot_function(
     cmap: str = "brg",
     clim: list[float] | None = None,
     points: list[list[float]] | None = None,
+    remove_scalar_bar: bool = False,
     save_to: str | None = None,
 ):
     """A function which plots a `fem.Function` object from `dolfinx`.
@@ -299,6 +300,8 @@ def plot_function(
         A list defining a lower and upper bound for the colormap.
     `points`: list[float]
         A list of points to add to a plot.
+    `remove_scalar_bar: bool
+        Turn to True if you want to remove the scalarbar.
     `save_to`: str
         A path to the file where the plot will be saved in the `figures` directory.
     """
@@ -358,6 +361,7 @@ def plot_function(
             font_size=25,
             use_2d=function.function_space.mesh.topology.dim == 2,
         )
+    plotter.remove_scalar_bar()
     if save_to is not None:
         plotter.save_graphic(f"figures/{save_to}")
     plotter.show()
