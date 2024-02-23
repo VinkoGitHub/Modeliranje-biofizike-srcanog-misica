@@ -14,7 +14,7 @@ st.divider()
 
 # Body
 bullet(
-    "1 do 10 milijardi stanica<sup>[8]</sup>",
+    "1 milijarda do 10 milijardi stanica<sup>[8]</sup>",
     "Homogenizacija",
     "Usrednjene veličine",
 )
